@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gandi Armana Tarigan - Portofolio</title>
+    <!-- Ini adalah "mesin" yang membuat desain TailwindCSS berfungsi -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Ini adalah library untuk ikon-ikon (Trophy, Phone, dll ) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         /* Menambahkan font Google untuk tampilan yang lebih baik */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap' );
@@ -12,20 +15,14 @@
             font-family: 'Inter', sans-serif;
             background-color: #FFF7ED; /* Fallback bg-orange-50 */
         }
-        /* Konfigurasi kustom untuk Tailwind */
+        /* Konfigurasi kustom untuk Tailwind agar warnanya sesuai */
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         orange: {
-                            50: '#FFF7ED',
-                            100: '#FFEDD5',
-                            200: '#FED7AA',
-                            300: '#FDBA74',
-                            400: '#FB923C',
-                            500: '#F97316',
-                            600: '#EA580C',
-                            900: '#7C2D12',
+                            50: '#FFF7ED', 100: '#FFEDD5', 200: '#FED7AA', 300: '#FDBA74',
+                            400: '#FB923C', 500: '#F97316', 600: '#EA580C', 900: '#7C2D12',
                         }
                     }
                 }
@@ -60,33 +57,18 @@
     <section id="home" class="relative h-screen flex items-center justify-center overflow-hidden">
         <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('basketball-court.jpg'); filter: brightness(0.3);"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-black/70 to-orange-900/50"></div>
-        
         <div class="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
-            <div class="mb-8">
-                <div class="w-40 h-40 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full mx-auto mb-6 flex items-center justify-center shadow-2xl overflow-hidden border-4 border-white">
-                    <img src="profile-photo.jpg" alt="Gandi Armana Tarigan" class="w-full h-full object-cover object-center">
-                </div>
+            <div class="w-40 h-40 rounded-full mx-auto mb-6 overflow-hidden border-4 border-white shadow-2xl">
+                <img src="profile-photo.jpg" alt="Gandi Armana Tarigan" class="w-full h-full object-cover">
             </div>
-            
             <h1 class="text-5xl md:text-7xl font-bold mb-4 bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">
                 Gandi Armana Tarigan
             </h1>
-            
-            <p class="text-xl md:text-2xl mb-2 text-orange-200">
-                Panggilan: <span class="font-semibold text-white">Gandi</span>
-            </p>
-            
-            <p class="text-lg md:text-xl mb-8 text-gray-300">
-                Mahasiswa Ilmu Komputer | Basketball Enthusiast | Ex-PASKIBRAKA
-            </p>
-            
+            <p class="text-xl md:text-2xl mb-2 text-orange-200">Panggilan: <span class="font-semibold text-white">Gandi</span></p>
+            <p class="text-lg md:text-xl mb-8 text-gray-300">Mahasiswa Ilmu Komputer | Basketball Enthusiast | Ex-PASKIBRAKA</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#about" class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 text-lg rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 inline-block">
-                    Lihat Profil
-                </a>
-                <a href="#contact" class="border border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-black px-8 py-3 text-lg rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 inline-block">
-                    Hubungi Saya
-                </a>
+                <a href="#about" class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 text-lg rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 inline-block">Lihat Profil</a>
+                <a href="#contact" class="border border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-black px-8 py-3 text-lg rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 inline-block">Hubungi Saya</a>
             </div>
         </div>
     </section>
@@ -95,24 +77,15 @@
     <section id="about" class="py-20 bg-white">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                    Tentang <span class="text-orange-500">Saya</span>
-                </h2>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Tentang <span class="text-orange-500">Saya</span></h2>
                 <div class="w-24 h-1 bg-orange-500 mx-auto rounded-full"></div>
             </div>
-
             <div class="grid md:grid-cols-2 gap-12 items-center">
-                <div class="p-8 shadow-xl border-l-4 border-orange-500 rounded-lg">
-                    <div class="flex items-center mb-6">
-                        <h3 class="text-2xl font-bold text-gray-900">Profil Pribadi</h3>
-                    </div>
+                <div class="p-8 shadow-xl border-l-4 border-orange-500 rounded-lg bg-white">
+                    <div class="flex items-center mb-6"><i data-lucide="user" class="w-8 h-8 text-orange-500 mr-3"></i><h3 class="text-2xl font-bold text-gray-900">Profil Pribadi</h3></div>
                     <div class="space-y-4 text-gray-700">
-                        <p class="text-lg leading-relaxed">
-                            Saya adalah mahasiswa semester 1 di Program Studi Ilmu Komputer, Universitas Negeri Medan. Memiliki passion yang besar terhadap teknologi dan olahraga, khususnya basket.
-                        </p>
-                        <p class="text-lg leading-relaxed">
-                            Sebagai mantan anggota PASKIBRAKA Karo tahun 2022, saya memiliki pengalaman dalam kepemimpinan, disiplin, dan kerja tim yang kuat.
-                        </p>
+                        <p class="text-lg leading-relaxed">Saya adalah mahasiswa semester 1 di Program Studi Ilmu Komputer, Universitas Negeri Medan. Memiliki passion yang besar terhadap teknologi dan olahraga, khususnya basket.</p>
+                        <p class="text-lg leading-relaxed">Sebagai mantan anggota PASKIBRAKA Karo tahun 2022, saya memiliki pengalaman dalam kepemimpinan, disiplin, dan kerja tim yang kuat.</p>
                         <div class="flex flex-wrap gap-2 mt-6">
                             <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-semibold">Mahasiswa</span>
                             <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-semibold">Ilmu Komputer</span>
@@ -121,23 +94,117 @@
                         </div>
                     </div>
                 </div>
+                <div class="bg-gradient-to-r from-orange-500 to-orange-600 p-8 rounded-2xl text-white shadow-xl">
+                    <h4 class="text-2xl font-bold mb-4">Quick Facts</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center"><i data-lucide="map-pin" class="w-5 h-5 mr-3"></i><span>Karo, Sumatera Utara</span></div>
+                        <div class="flex items-center"><i data-lucide="user" class="w-5 h-5 mr-3"></i><span>Mahasiswa Aktif</span></div>
+                        <div class="flex items-center"><i data-lucide="trophy" class="w-5 h-5 mr-3"></i><span>Ex-PASKIBRAKA 2022</span></div>
+                        <div class="flex items-center"><i data-lucide="heart" class="w-5 h-5 mr-3"></i><span>Basketball Player</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                <div class="space-y-6">
-                    <div class="bg-gradient-to-r from-orange-500 to-orange-600 p-8 rounded-2xl text-white shadow-xl">
-                        <h4 class="text-2xl font-bold mb-4">Quick Facts</h4>
-                        <div class="space-y-3">
-                            <p>Karo, Sumatera Utara</p>
-                            <p>Mahasiswa Aktif</p>
-                            <p>Ex-PASKIBRAKA 2022</p>
-                            <p>Basketball Player</p>
+    <!-- Achievements Section -->
+    <section id="achievements" class="py-20 bg-gradient-to-br from-gray-900 to-black text-white">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4"><span class="text-orange-400">Prestasi</span> & Pencapaian</h2>
+                <div class="w-24 h-1 bg-orange-400 mx-auto rounded-full"></div>
+            </div>
+            <div class="bg-white/10 border border-orange-400/30 rounded-lg p-8">
+                <div class="flex items-start space-x-6">
+                    <div class="flex-shrink-0"><div class="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center shadow-lg"><i data-lucide="trophy" class="w-8 h-8 text-white"></i></div></div>
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-orange-400 mb-3">PASKIBRAKA Karo 2022</h3>
+                        <p class="text-gray-300 text-lg leading-relaxed mb-4">Terpilih sebagai anggota Pasukan Pengibar Bendera Pusaka (PASKIBRAKA) Kabupaten Karo tahun 2022. Merupakan kehormatan besar untuk dapat berpartisipasi dalam upacara kemerdekaan Indonesia.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="bg-orange-500/20 text-orange-300 border border-orange-400/30 px-3 py-1 rounded-full text-sm">Kepemimpinan</span>
+                            <span class="bg-orange-500/20 text-orange-300 border border-orange-400/30 px-3 py-1 rounded-full text-sm">Disiplin</span>
+                            <span class="bg-orange-500/20 text-orange-300 border border-orange-400/30 px-3 py-1 rounded-full text-sm">Nasionalisme</span>
+                            <span class="bg-orange-500/20 text-orange-300 border border-orange-400/30 px-3 py-1 rounded-full text-sm">Kerja Tim</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-    
-    <!-- Bagian lain akan ditambahkan di sini -->
 
+    <!-- Hobbies Section -->
+    <section id="hobbies" class="py-20 bg-orange-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Hobi & <span class="text-orange-500">Minat</span></h2>
+                <div class="w-24 h-1 bg-orange-500 mx-auto rounded-full"></div>
+            </div>
+            <div class="shadow-xl hover:shadow-2xl transition-shadow duration-300 border-l-4 border-orange-500 rounded-lg bg-white p-8">
+                <div class="flex items-start space-x-6">
+                    <div class="flex-shrink-0"><div class="w-20 h-20 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center shadow-lg"><span class="text-3xl">🏀</span></div></div>
+                    <div class="flex-1">
+                        <h3 class="text-3xl font-bold text-gray-900 mb-4">Basketball</h3>
+                        <p class="text-gray-700 text-lg leading-relaxed mb-6">Basketball adalah passion utama saya. Olahraga ini tidak hanya memberikan kebugaran fisik, tetapi juga mengajarkan strategi, kerja tim, dan mental yang kuat. Saya menikmati setiap aspek dari permainan ini, mulai dari teknik dasar hingga strategi tim yang kompleks.</p>
+                        <div class="grid sm:grid-cols-2 gap-4 mb-6">
+                            <div class="bg-orange-100 p-4 rounded-lg"><h4 class="font-semibold text-orange-800 mb-2">Posisi Favorit</h4><p class="text-orange-700">Center</p></div>
+                            <div class="bg-orange-100 p-4 rounded-lg"><h4 class="font-semibold text-orange-800 mb-2">Skill Focus</h4><p class="text-orange-700">Shooting, Ball Handling, Defense</p></div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">Team Player</span>
+                            <span class="bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">Strategic Thinking</span>
+                            <span class="bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">Physical Fitness</span>
+                            <span class="bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">Mental Toughness</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 bg-gradient-to-br from-gray-900 to-black text-white">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">Hubungi <span class="text-orange-400">Saya</span></h2>
+                <div class="w-24 h-1 bg-orange-400 mx-auto rounded-full"></div>
+                <p class="text-xl text-gray-300 mt-6">Mari terhubung dan berkolaborasi!</p>
+            </div>
+            <div class="bg-white/10 border border-orange-400/30 rounded-lg p-8 max-w-2xl mx-auto">
+                <div class="space-y-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center"><i data-lucide="phone" class="w-6 h-6 text-white"></i></div>
+                        <div><h3 class="text-xl font-semibold text-orange-400">Nomor Telepon</h3><p class="text-gray-300 text-lg">082236376588</p></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center"><i data-lucide="map-pin" class="w-6 h-6 text-white"></i></div>
+                        <div><h3 class="text-xl font-semibold text-orange-400">Lokasi</h3><p class="text-gray-300 text-lg">Karo, Sumatera Utara</p></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center"><i data-lucide="user" class="w-6 h-6 text-white"></i></div>
+                        <div><h3 class="text-xl font-semibold text-orange-400">Status</h3><p class="text-gray-300 text-lg">Mahasiswa Aktif - Universitas Negeri Medan</p></div>
+                    </div>
+                </div>
+                <div class="mt-8 pt-8 border-t border-orange-400/30">
+                    <a href="tel:082236376588" class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-3 text-lg rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 block text-center">Hubungi Sekarang</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black py-8">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <div class="w-8 h-8 bg-orange-500 rounded-full mr-3 flex items-center justify-center"><span class="text-white font-bold text-sm">🏀</span></div>
+                <span class="text-white font-bold text-xl">Gandi Armana Tarigan</span>
+            </div>
+            <p class="text-gray-400">© 2024 Gandi Armana Tarigan. Basketball Enthusiast & Computer Science Student.</p>
+        </div>
+    </footer>
+
+    <!-- Skrip ini penting untuk membuat ikon-ikonnya muncul -->
+    <script>
+      lucide.createIcons();
+    </script>
 </body>
 </html>
