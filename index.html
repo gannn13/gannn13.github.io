@@ -2,127 +2,114 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Analisis Efisiensi Charger HP — dSoC/dt</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini-Riset: Analisis Efisiensi Charger — dSoC/dt</title>
 
-  <!-- Tailwind (opsional, CDN) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/css/styles.css" />
 
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- PapaParse CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
-  <!-- Styles lokal -->
-  <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
-<body class="bg-gray-50 text-gray-800">
-  <div class="max-w-6xl mx-auto p-6">
-    <header class="mb-6">
-      <h1 class="text-2xl font-bold">Analisis Efisiensi Charger HP</h1>
-      <p class="text-sm text-gray-600">Dashboard Efisiensi Charger HP — Analisis dSoC/dt</p>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="brand">
+        <h1>Analisis Efisiensi Charger (dSoC/dt)</h1>
+        <p class="muted">Masukkan data merk charger & HP, lalu lihat proses turunan dan grafiknya.</p>
+      </div>
     </header>
 
-    <!-- UPLOADER -->
-    <section id="uploader" class="mb-6 bg-white p-4 shadow rounded">
-      <h2 class="font-semibold">Unggah CSV</h2>
-      <p class="text-sm text-gray-600">Format CSV wajib: <code>charger,time_min,soc_percent,hp_brand,charger_type,charger_price,uploader</code></p>
+    <main class="main container">
+      <section class="panel">
+        <h2>Input Data Percobaan</h2>
+        <form id="experimentForm" class="form">
+          <div class="row">
+            <label>Nama percobaan</label>
+            <input id="expName" placeholder="Contoh: Charger ABC + HP X" required />
+          </div>
 
-      <div class="mt-3">
-        <input id="csvFile" type="file" accept=".csv" />
-        <button id="btnPreview" class="ml-3 px-3 py-1 bg-blue-600 text-white rounded">Tampilkan Preview</button>
-      </div>
+          <div class="row">
+            <label>Merk Charger</label>
+            <input id="chargerBrand" placeholder="Contoh: Anker, Xiaomi" required />
+          </div>
 
-      <div id="previewArea" class="mt-4 hidden">
-        <h3 class="font-medium">Preview (10 baris pertama)</h3>
-        <pre id="previewText" class="bg-gray-100 p-2 rounded text-sm overflow-auto max-h-40"></pre>
+          <div class="row">
+            <label>Merk & Model HP</label>
+            <input id="phoneBrand" placeholder="Contoh: Samsung A12" required />
+          </div>
 
-        <div id="uploaderNameWrap" class="mt-2 hidden">
-          <label class="block text-sm">Masukkan nama Anda (kolom uploader tidak ada):</label>
-          <input id="uploaderName" type="text" class="border p-1 rounded" />
+          <div class="row">
+            <label>Deskripsi singkat (opsional)</label>
+            <input id="desc" placeholder="Kondisi: HP mati, screen-off, dsb." />
+          </div>
+
+          <div class="row">
+            <label>Data waktu & SoC (format CSV)</label>
+            <textarea id="csvData" placeholder="Format tiap baris: time_seconds,SoC_percent
+Contoh:
+0,20
+60,22
+120,25
+180,29
+240,33" rows="6" required></textarea>
+            <small class="muted">Waktu dalam detik (s), SoC dalam persen (0-100). Minimal 3 titik data.</small>
+          </div>
+
+          <div class="row actions">
+            <button type="submit" class="btn primary">Proses Data & Hitung Turunan</button>
+            <button type="button" id="loadExample" class="btn">Muat Contoh</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel results">
+        <h2>Hasil Perhitungan</h2>
+        <div id="summary" class="summary">
+          <p class="muted">Belum ada data. Proses data untuk melihat hasil.</p>
         </div>
 
-        <div class="mt-3">
-          <label class="inline-flex items-center"><input type="checkbox" id="toggleSmoothing" class="mr-2"> Gunakan smoothing (moving average window=3)</label>
+        <div class="charts">
+          <canvas id="socChart" aria-label="Grafik SoC terhadap Waktu"></canvas>
+          <canvas id="derivChart" aria-label="Grafik dSoC/dt terhadap Waktu"></canvas>
         </div>
 
-        <div class="mt-3">
-          <button id="btnUpload" class="px-3 py-1 bg-green-600 text-white rounded">Unggah CSV (simpan lokal)</button>
-          <span id="uploadStatus" class="ml-3 text-sm text-gray-600"></span>
+        <div class="table-actions">
+          <button id="exportCsv" class="btn">Export Semua Hasil (CSV)</button>
+          <input type="file" id="importCsvFile" accept=".csv" />
+          <button id="clearAll" class="btn warn">Hapus Semua Simpanan</button>
         </div>
-      </div>
-    </section>
 
-    <!-- FILTER -->
-    <section id="filterSection" class="mb-6 bg-white p-4 shadow rounded">
-      <h2 class="font-semibold">Filter & Kontrol</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-        <div>
-          <label class="block text-sm">Merek HP (hp_brand)</label>
-          <select id="filterBrand" class="w-full border p-1 rounded"><option value="">(Semua)</option></select>
+        <h3>Daftar Hasil Tersimpan</h3>
+        <div class="table-wrap">
+          <table id="resultsTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nama</th>
+                <th>Charger</th>
+                <th>HP</th>
+                <th>Waktu sampel</th>
+                <th>Avg dSoC/dt (%/s)</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </div>
-        <div>
-          <label class="block text-sm">Tipe Charger (charger_type)</label>
-          <select id="filterChgType" class="w-full border p-1 rounded"><option value="">(Semua)</option></select>
+
+        <div class="note">
+          <p class="muted">Bagikan hasil satu percobaan: klik ikon 🔗 di kolom Aksi untuk membuat link yang dapat dibuka orang lain (URL terenkode di hash). Mereka yang membuka link akan melihat hasil tersebut.</p>
         </div>
-        <div>
-          <label class="block text-sm">Rentang Harga (Rp)</label>
-          <input id="filterPriceMin" type="number" placeholder="Min" class="w-1/2 border p-1 rounded" />
-          <input id="filterPriceMax" type="number" placeholder="Max" class="w-1/2 border p-1 rounded" />
-        </div>
-        <div>
-          <label class="block text-sm">Uploader</label>
-          <select id="filterUploader" class="w-full border p-1 rounded"><option value="">(Semua)</option></select>
-        </div>
-      </div>
+      </section>
+    </main>
 
-      <div class="mt-3">
-        <label class="block text-sm">Tampilkan grup</label>
-        <select id="selectGroup" class="w-full border p-1 rounded"><option value="all">Tampilkan semua</option></select>
+    <footer class="footer">
+      <div class="container">
+        <small>Disiapkan untuk tugas mini-riset kalkulus diferensial — dSoC/dt · (Static site — siap di GitHub Pages)</small>
       </div>
-    </section>
-
-    <!-- CHARTS -->
-    <section id="charts" class="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div class="bg-white p-4 shadow rounded">
-        <h3 class="font-medium">SoC(t)</h3>
-        <canvas id="chartSoC"></canvas>
-      </div>
-      <div class="bg-white p-4 shadow rounded">
-        <h3 class="font-medium">dSoC/dt ( %/menit )</h3>
-        <canvas id="chartD"></canvas>
-      </div>
-    </section>
-
-    <!-- SUMMARY TABLE -->
-    <section id="tableSection" class="bg-white p-4 shadow rounded">
-      <h3 class="font-medium">Ringkasan Grup</h3>
-      <div class="overflow-auto mt-3">
-        <table id="summaryTable" class="min-w-full text-sm">
-          <thead class="bg-gray-100">
-            <tr>
-              <th class="p-2">Nama Charger</th>
-              <th class="p-2">Merek HP</th>
-              <th class="p-2">Tipe Charger</th>
-              <th class="p-2">Harga (Rp)</th>
-              <th class="p-2">Uploader</th>
-              <th class="p-2">Tanggal</th>
-              <th class="p-2">Rata-rata (%/menit)</th>
-              <th class="p-2">Estimasi 20→80 (menit)</th>
-              <th class="p-2">Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="summaryBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <footer class="mt-6 text-xs text-gray-600">
-      Data bersifat publik. Jika ingin menghapus unggahan, hubungi admin.
     </footer>
   </div>
-  <!-- Script lokal -->
+
   <script src="assets/js/app.js" defer></script>
 </body>
 </html>
