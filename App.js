@@ -1,464 +1,373 @@
-/* app.js
-   Frontend mandiri yang bisa berjalan lokal tanpa backend.
-   - Menggunakan PapaParse untuk parse CSV
-   - Menghitung dSoC/dt sesuai spesifikasi (central difference + forward/backward)
-   - Smoothing optional (moving average window=3)
-   - Menyimpan grup ke localStorage sebagai fallback (agar berjalan lokal)
-   - Menghasilkan group_id, menampilkan grafik (Chart.js), ringkasan, unduh CSV processed
-   - Semua pesan & tooltip dalam Bahasa Indonesia
-*/
+// assets/js/app.js
+// Bahasa Indonesia UI, static-only, siap di GitHub Pages
+// Fitur:
+// - Input data CSV time(s),SoC(%)
+// - Hitung turunan numerik (dSoC/dt) menggunakan central difference
+// - Tampilkan grafik SoC vs waktu & dSoC/dt vs waktu (Chart.js)
+// - Simpan hasil ke localStorage, export/import CSV, shareable link (encoded in URL hash)
 
-/* ---------- Konfigurasi ---------- */
-// Nama key di localStorage untuk menyimpan grup jika tidak ada backend
-const LOCALSTORAGE_KEY = 'efisiensi_charger_groups_v1';
+(function () {
+  // util
+  function qs(id){ return document.getElementById(id); }
+  function parseCSVText(txt){
+    // parse simple CSV: lines of "time,SoC"
+    const lines = txt.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+    const data = [];
+    for(const line of lines){
+      const parts = line.split(',').map(p=>p.trim());
+      if(parts.length < 2) continue;
+      const t = Number(parts[0]);
+      const soc = Number(parts[1]);
+      if(Number.isFinite(t) && Number.isFinite(soc)) data.push({t, soc});
+    }
+    // sort by time ascending
+    data.sort((a,b)=>a.t - b.t);
+    return data;
+  }
 
-/* ---------- Elemen DOM ---------- */
-const csvInput = document.getElementById('csvFile');
-const btnPreview = document.getElementById('btnPreview');
-const previewArea = document.getElementById('previewArea');
-const previewText = document.getElementById('previewText');
-const uploaderNameWrap = document.getElementById('uploaderNameWrap');
-const uploaderNameInput = document.getElementById('uploaderName');
-const btnUpload = document.getElementById('btnUpload');
-const uploadStatus = document.getElementById('uploadStatus');
-const toggleSmoothing = document.getElementById('toggleSmoothing');
-
-const filterBrand = document.getElementById('filterBrand');
-const filterChgType = document.getElementById('filterChgType');
-const filterUploader = document.getElementById('filterUploader');
-const filterPriceMin = document.getElementById('filterPriceMin');
-const filterPriceMax = document.getElementById('filterPriceMax');
-const selectGroup = document.getElementById('selectGroup');
-const summaryBody = document.getElementById('summaryBody');
-
-let lastParsed = null;
-let groupsCache = []; // array grup ter-load
-let chartSoC = null, chartD = null;
-
-/* ---------- Helper: localStorage (fallback) ---------- */
-function loadGroupsFromLocal(){
-  const raw = localStorage.getItem(LOCALSTORAGE_KEY);
-  if(!raw) return [];
-  try { return JSON.parse(raw); } catch(e){ return []; }
-}
-function saveGroupsToLocal(groups){
-  localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(groups));
-}
-
-/* ---------- CSV Preview & Validasi ---------- */
-btnPreview.addEventListener('click', () => {
-  const file = csvInput.files[0];
-  if(!file){ alert('Pilih file CSV terlebih dahulu.'); return; }
-  if(file.size > 10 * 1024 * 1024){ alert('Ukuran file melebihi 10 MB.'); return; }
-
-  Papa.parse(file, {
-    header: true,
-    skipEmptyLines: true,
-    preview: 10,
-    complete: (results) => {
-      const fields = results.meta.fields || [];
-      previewArea.classList.remove('hidden');
-      previewText.textContent = JSON.stringify(results.data, null, 2);
-
-      const required = ['charger','time_min','soc_percent','hp_brand','charger_type','charger_price','uploader'];
-      const hasAll = required.every(h => fields.includes(h));
-      if(!hasAll){
-        const altRequired = ['charger','time_min','soc_percent','hp_brand','charger_type','charger_price'];
-        const hasAlt = altRequired.every(h => fields.includes(h));
-        if(hasAlt){
-          uploaderNameWrap.classList.remove('hidden');
-        } else {
-          alert('Format CSV tidak valid. Pastikan header: charger,time_min,soc_percent,hp_brand,charger_type,charger_price,uploader');
-        }
+  // numerical derivative using central differences
+  function computeDerivative(samples){
+    // samples: [{t: , soc: }, ...], t in seconds, soc in percent
+    // returns array of {t_mid, dSoCdt} aligned per midpoint or per sample index (we'll align to original samples using central diff)
+    const n = samples.length;
+    if(n < 2) return [];
+    const deriv = new Array(n).fill(null);
+    for(let i=0;i<n;i++){
+      if(i===0){
+        // forward difference
+        const dt = samples[i+1].t - samples[i].t;
+        deriv[i] = (samples[i+1].soc - samples[i].soc)/dt;
+      } else if(i===n-1){
+        // backward difference
+        const dt = samples[i].t - samples[i-1].t;
+        deriv[i] = (samples[i].soc - samples[i-1].soc)/dt;
       } else {
-        uploaderNameWrap.classList.add('hidden');
+        // central difference
+        const dt = samples[i+1].t - samples[i-1].t;
+        deriv[i] = (samples[i+1].soc - samples[i-1].soc)/dt;
       }
-
-      lastParsed = { results, fields };
     }
-  });
-});
-
-/* ---------- Perhitungan derivative sesuai spesifikasi ---------- */
-function computeDerivative(points){
-  // points: array objek {time_min: Number, soc_percent: Number} sudah terurut naik
-  const n = points.length;
-  const res = [];
-  if(n === 0) return res;
-  if(n === 1){
-    res.push(Object.assign({}, points[0], { dSoC_dt: 0 }));
-    return res;
+    // return as percent-per-second
+    return deriv;
   }
-  for(let i=0;i<n;i++){
-    const s = Number(points[i].soc_percent);
-    const t = Number(points[i].time_min);
-    if(i === 0){
-      const s1 = Number(points[1].soc_percent);
-      const t1 = Number(points[1].time_min);
-      const d = (s1 - s) / (t1 - t);
-      res.push(Object.assign({}, points[i], { dSoC_dt: d }));
-    } else if(i === n-1){
-      const s0 = Number(points[n-2].soc_percent);
-      const t0 = Number(points[n-2].time_min);
-      const d = (s - s0) / (t - t0);
-      res.push(Object.assign({}, points[i], { dSoC_dt: d }));
-    } else {
-      const s0 = Number(points[i-1].soc_percent);
-      const t0 = Number(points[i-1].time_min);
-      const s1 = Number(points[i+1].soc_percent);
-      const t1 = Number(points[i+1].time_min);
-      const d = (s1 - s0) / (t1 - t0);
-      res.push(Object.assign({}, points[i], { dSoC_dt: d }));
+
+  function formatNumber(x, dp=3){
+    return (Math.round(x * Math.pow(10, dp))/Math.pow(10, dp)).toString();
+  }
+
+  // storage
+  const STORAGE_KEY = 'mr_dsoc_results_v1';
+  function loadAll(){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return [];
+      return JSON.parse(raw);
+    } catch(e){ return []; }
+  }
+  function saveAll(arr){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  }
+
+  // Charts
+  let socChart = null;
+  let derivChart = null;
+  function ensureCharts(){
+    const socCtx = qs('socChart').getContext('2d');
+    const derivCtx = qs('derivChart').getContext('2d');
+    if(!socChart){
+      socChart = new Chart(socCtx, {
+        type: 'line',
+        data: { labels: [], datasets: [{
+          label: 'SoC (%)',
+          data: [],
+          borderWidth: 2,
+          tension: 0.25,
+          fill: false,
+        }]},
+        options: { responsive:true, plugins:{legend:{display:true}}, scales:{x:{title:{display:true,text:'Waktu (s)'}}, y:{title:{display:true,text:'SoC (%)'}}} }
+      });
+    }
+    if(!derivChart){
+      derivChart = new Chart(derivCtx, {
+        type: 'line',
+        data: { labels: [], datasets: [{
+          label: 'dSoC/dt (%/s)',
+          data: [],
+          borderWidth: 2,
+          tension: 0.25,
+          fill: false
+        }]},
+        options: { responsive:true, plugins:{legend:{display:true}}, scales:{x:{title:{display:true,text:'Waktu (s)'}}, y:{title:{display:true,text:'dSoC/dt (%/s)'}}} }
+      });
     }
   }
-  return res;
-}
 
-/* ---------- Moving average window=3 ---------- */
-function movingAverageValues(arr){
-  const n = arr.length;
-  if(n < 3) return arr.slice();
-  const out = arr.slice();
-  for(let i=1;i<n-1;i++){
-    out[i] = (arr[i-1] + arr[i] + arr[i+1]) / 3;
-  }
-  return out;
-}
+  function updateCharts(samples, derivs){
+    ensureCharts();
+    const labels = samples.map(s=>s.t);
+    socChart.data.labels = labels;
+    socChart.data.datasets[0].data = samples.map(s=>s.soc);
+    socChart.update();
 
-/* ---------- Upload handler (simpan ke localStorage) ---------- */
-btnUpload.addEventListener('click', async () => {
-  if(!lastParsed){ alert('Silakan lakukan preview terlebih dahulu.'); return; }
-  uploadStatus.textContent = 'Mengunggah… mohon tunggu.';
-
-  // baca file penuh sebagai teks (jika ada file)
-  const file = csvInput.files[0];
-  let csvText = '';
-  if(file){
-    csvText = await file.text();
-  } else {
-    alert('File tidak ditemukan. Pilih file CSV terlebih dahulu.'); uploadStatus.textContent=''; return;
+    derivChart.data.labels = labels;
+    derivChart.data.datasets[0].data = derivs;
+    derivChart.update();
   }
 
-  // parse full csv
-  const parsed = Papa.parse(csvText, {header:true, skipEmptyLines:true});
-  const fields = parsed.meta.fields || [];
-  const required = ['charger','time_min','soc_percent','hp_brand','charger_type','charger_price'];
-  const hasRequired = required.every(h => fields.includes(h));
-  if(!hasRequired){
-    alert('Format CSV tidak valid. Pastikan header: charger,time_min,soc_percent,hp_brand,charger_type,charger_price,uploader');
-    uploadStatus.textContent = '';
-    return;
+  // UI rendering
+  function renderTable(){
+    const all = loadAll();
+    const tbody = qs('resultsTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    all.forEach((item, idx) => {
+      const tr = document.createElement('tr');
+      const avgDeriv = item.deriv && item.deriv.length ? (item.deriv.reduce((a,b)=>a+b,0)/item.deriv.length) : 0;
+      tr.innerHTML = `
+        <td>${idx+1}</td>
+        <td>${escapeHtml(item.name)}</td>
+        <td>${escapeHtml(item.charger)}</td>
+        <td>${escapeHtml(item.phone)}</td>
+        <td>${item.samples.length} titik</td>
+        <td>${formatNumber(avgDeriv,5)}</td>
+        <td>
+          <button data-idx="${idx}" class="btn small view">Lihat</button>
+          <button data-idx="${idx}" class="btn small link">🔗</button>
+          <button data-idx="${idx}" class="btn small export">CSV</button>
+          <button data-idx="${idx}" class="btn small del warn">Hapus</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+    // attach handlers
+    tbody.querySelectorAll('button.view').forEach(b=>{
+      b.addEventListener('click', e=>{
+        const i = Number(e.currentTarget.dataset.idx); showItem(i);
+      });
+    });
+    tbody.querySelectorAll('button.del').forEach(b=>{
+      b.addEventListener('click', e=>{
+        const i = Number(e.currentTarget.dataset.idx);
+        if(confirm('Hapus item #' + (i+1) + ' secara permanen?')) {
+          const all = loadAll(); all.splice(i,1); saveAll(all); renderTable();
+        }
+      });
+    });
+    tbody.querySelectorAll('button.link').forEach(b=>{
+      b.addEventListener('click', e=>{
+        const i = Number(e.currentTarget.dataset.idx);
+        const all = loadAll();
+        const item = all[i];
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(item))));
+        const url = location.origin + location.pathname + '#' + encoded;
+        prompt('Salin link ini untuk dibagikan (buka di browser lain untuk melihat hasil):', url);
+      });
+    });
+    tbody.querySelectorAll('button.export').forEach(b=>{
+      b.addEventListener('click', e=>{
+        const i = Number(e.currentTarget.dataset.idx);
+        const all = loadAll();
+        downloadSingleCSV(all[i]);
+      });
+    });
   }
 
-  // jika kolom uploader tidak ada, gunakan input uploaderName
-  let uploaderName = '';
-  if(!fields.includes('uploader')){
-    uploaderName = (uploaderNameInput.value || '').trim();
-    if(!uploaderName){ alert('Masukkan nama Anda pada kolom uploader'); uploadStatus.textContent = ''; return; }
-    parsed.data.forEach(r => r.uploader = uploaderName);
-  } else {
-    uploaderName = parsed.data[0] && parsed.data[0].uploader ? parsed.data[0].uploader : 'Anonim';
+  function escapeHtml(s){
+    return (s+'').replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; });
   }
 
-  // buat points (time_min numeric, soc_percent numeric)
-  const rawRows = parsed.data.map(r => {
-    return {
-      charger: String(r.charger || '').trim(),
-      time_min: Number(r.time_min),
-      soc_percent: Number(r.soc_percent),
-      hp_brand: String(r.hp_brand || '').trim(),
-      charger_type: String(r.charger_type || '').trim(),
-      charger_price: Number(r.charger_price || 0),
-      uploader: String(r.uploader || uploaderName).trim()
-    };
-  });
-
-  // kelompokkan berdasarkan (charger, hp_brand, charger_type, charger_price, uploader, timestamp)
-  // Per instruksi setiap unggahan menjadi satu group time-series
-  const timestamp = Date.now();
-  const group_id = 'grp_' + timestamp + '_' + Math.random().toString(36).slice(2,9);
-
-  // points hanya fields time_min & soc_percent, urutkan berdasarkan time_min
-  const points = rawRows.map(r => ({ time_min: r.time_min, soc_percent: r.soc_percent }))
-                        .sort((a,b) => a.time_min - b.time_min);
-
-  // optional smoothing di frontend jika pengguna centang toggle
-  let processedPoints = points.map(p => ({ ...p })); // salin
-  if(toggleSmoothing.checked){
-    const socs = processedPoints.map(p => p.soc_percent);
-    const smoothed = movingAverageValues(socs);
-    processedPoints.forEach((p,i) => p.soc_percent = smoothed[i]);
-  }
-
-  // hitung derivative sesuai spesifikasi
-  const withD = computeDerivative(processedPoints);
-
-  // hitung avg_rate (abaikan non-finite)
-  const validDs = withD.map(p => p.dSoC_dt).filter(d => Number.isFinite(d));
-  const avg_rate = validDs.length ? (validDs.reduce((a,b)=>a+b,0) / validDs.length) : 0;
-  const estimate_20_80 = (avg_rate > 0) ? Math.round(60 / avg_rate) : null; // menit
-
-  // metadata grup
-  const groupMeta = {
-    group_id,
-    charger: rawRows[0].charger || '',
-    hp_brand: rawRows[0].hp_brand || '',
-    charger_type: rawRows[0].charger_type || '',
-    charger_price: rawRows[0].charger_price || 0,
-    uploader: rawRows[0].uploader || uploaderName,
-    timestamp,
-    avg_rate,
-    estimate_20_80,
-    points: withD // setiap point: {time_min, soc_percent, dSoC_dt}
-  };
-
-  // simpan ke localStorage (append)
-  const groups = loadGroupsFromLocal();
-  groups.unshift(groupMeta); // tambah di awal
-  saveGroupsToLocal(groups);
-  groupsCache = groups;
-
-  uploadStatus.textContent = `Unggah berhasil — data disimpan sebagai group: ${group_id}`;
-  // reset preview UI sedikit
-  setTimeout(()=>{ uploadStatus.textContent = ''; }, 4000);
-
-  // refresh tampilan
-  populateFilters(groups);
-  populateTable(groups);
-  populateGroupSelect(groups);
-  renderCharts(groups);
-
-  // otomatis scroll ke tabel
-  document.getElementById('tableSection').scrollIntoView({behavior:'smooth'});
-});
-
-/* ---------- Render & UI helpers ---------- */
-function populateFilters(groups){
-  const brands = new Set();
-  const types = new Set();
-  const uploaders = new Set();
-  groups.forEach(g => { brands.add(g.hp_brand); types.add(g.charger_type); uploaders.add(g.uploader); });
-
-  fillSelect(filterBrand, [''].concat([...brands]));
-  fillSelect(filterChgType, [''].concat([...types]));
-  fillSelect(filterUploader, [''].concat([...uploaders]));
-}
-
-function fillSelect(selectEl, items){
-  const cur = selectEl.value;
-  selectEl.innerHTML = '';
-  items.forEach(it => {
-    const opt = document.createElement('option'); opt.value = it; opt.textContent = it || '(Semua)'; selectEl.appendChild(opt);
-  });
-  selectEl.value = cur || '';
-}
-
-function populateTable(groups){
-  summaryBody.innerHTML = '';
-  if(!groups || groups.length === 0){
-    summaryBody.innerHTML = `<tr><td class="p-3 empty-state" colspan="9">Belum ada data — unggah CSV untuk memulai</td></tr>`;
-    return;
-  }
-
-  groups.forEach(g => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="p-2">${escapeHtml(g.charger)}</td>
-      <td class="p-2">${escapeHtml(g.hp_brand)}</td>
-      <td class="p-2">${escapeHtml(g.charger_type)}</td>
-      <td class="p-2">${Number(g.charger_price).toLocaleString('id-ID')}</td>
-      <td class="p-2">${escapeHtml(g.uploader)}</td>
-      <td class="p-2">${new Date(g.timestamp).toLocaleString('id-ID')}</td>
-      <td class="p-2">${(g.avg_rate||0).toFixed(3)}</td>
-      <td class="p-2">${g.estimate_20_80 || '-'}</td>
-      <td class="p-2">
-        <button data-id="${g.group_id}" class="btnShare px-2 py-1 bg-blue-500 text-white rounded">Bagikan</button>
-        <button data-id="${g.group_id}" class="btnDownload px-2 py-1 bg-gray-700 text-white rounded ml-2">Unduh CSV</button>
-      </td>
+  function showItem(idx){
+    const all = loadAll();
+    const it = all[idx];
+    if(!it) return;
+    // update summary
+    const avg = it.deriv.reduce((a,b)=>a+b,0)/it.deriv.length;
+    qs('summary').innerHTML = `
+      <div>
+        <strong>${escapeHtml(it.name)}</strong> — Charger: ${escapeHtml(it.charger)}, HP: ${escapeHtml(it.phone)}
+        <p class="muted">${escapeHtml(it.desc || '')}</p>
+        <p>Rata-rata dSoC/dt: <strong>${formatNumber(avg,5)}</strong> %/s</p>
+        <p>Jumlah titik sampel: ${it.samples.length}</p>
+      </div>
     `;
-    summaryBody.appendChild(tr);
-  });
-
-  // aksi tombol
-  document.querySelectorAll('.btnShare').forEach(b => b.addEventListener('click', (e)=>{
-    const id = e.target.dataset.id;
-    const url = location.origin + location.pathname + '?group=' + encodeURIComponent(id);
-    // salin ke clipboard jika tersedia
-    if(navigator.clipboard){
-      navigator.clipboard.writeText(url).then(()=>{ alert('URL grup disalin ke clipboard'); }).catch(()=>{ prompt('Salin URL ini:', url); });
-    } else {
-      prompt('Salin URL ini:', url);
-    }
-  }));
-
-  document.querySelectorAll('.btnDownload').forEach(b => b.addEventListener('click', (e)=>{
-    const id = e.target.dataset.id;
-    const group = groupsCache.find(x => x.group_id === id);
-    if(!group){ alert('Group tidak ditemukan'); return; }
-    const csv = processedPointsToCSV(group.points);
-    downloadTextFile(csv, `${id}_processed.csv`);
-  }));
-}
-
-function populateGroupSelect(groups){
-  selectGroup.innerHTML = '';
-  const optAll = document.createElement('option'); optAll.value='all'; optAll.textContent='Tampilkan semua'; selectGroup.appendChild(optAll);
-  groups.forEach(g => {
-    const opt = document.createElement('option'); opt.value = g.group_id; opt.textContent = `${g.charger} — ${g.hp_brand} — ${g.uploader}`;
-    selectGroup.appendChild(opt);
-  });
-}
-
-/* ---------- Chart rendering ---------- */
-function renderCharts(groups){
-  // apply filters
-  const filtered = applyFilters(groups);
-  const datasetsSoC = [];
-  const datasetsD = [];
-
-  filtered.forEach((g, idx) => {
-    const times = g.points.map(p => Number(p.time_min));
-    const socs = g.points.map(p => Number(p.soc_percent));
-    const ds = g.points.map(p => Number(p.dSoC_dt || 0));
-
-    datasetsSoC.push({
-      label: `${g.charger} | ${g.hp_brand} | ${g.uploader}`,
-      data: times.map((t,i)=>({x:t,y:socs[i]})),
-      tension: 0.2,
-      borderWidth: 2,
-      // color otomatis oleh Chart.js default pallete
-    });
-    datasetsD.push({
-      label: `${g.charger} | ${g.hp_brand} | ${g.uploader}`,
-      data: times.map((t,i)=>({x:t,y:ds[i]})),
-      tension: 0.2,
-      borderWidth: 2,
-    });
-  });
-
-  const ctxSoC = document.getElementById('chartSoC').getContext('2d');
-  const ctxD = document.getElementById('chartD').getContext('2d');
-
-  if(chartSoC) chartSoC.destroy();
-  if(chartD) chartD.destroy();
-
-  chartSoC = new Chart(ctxSoC, {
-    type: 'line',
-    data: { datasets: datasetsSoC },
-    options: {
-      parsing: false,
-      plugins: {
-        legend: { display: true, position: 'top' },
-        tooltip: {
-          callbacks: {
-            label: function(context){
-              const x = context.parsed.x; const y = context.parsed.y;
-              return `SoC: ${y}% (t=${x} menit)`;
-            }
-          }
-        }
-      },
-      scales: {
-        x: { type: 'linear', title: { display: true, text: 'waktu (menit)' } },
-        y: { title: { display: true, text: 'SoC (%)' } }
-      },
-      interaction: { mode: 'nearest', axis: 'x', intersect: false }
-    }
-  });
-
-  chartD = new Chart(ctxD, {
-    type: 'line',
-    data: { datasets: datasetsD },
-    options: {
-      parsing: false,
-      plugins: {
-        legend: { display: true, position: 'top' },
-        tooltip: {
-          callbacks: {
-            label: function(context){
-              const x = context.parsed.x; const y = context.parsed.y;
-              return `Laju: ${Number(y).toFixed(3)} %/menit (t=${x} menit)`;
-            }
-          }
-        }
-      },
-      scales: {
-        x: { type: 'linear', title: { display: true, text: 'waktu (menit)' } },
-        y: { title: { display: true, text: 'Laju (%/menit)' } }
-      },
-      interaction: { mode: 'nearest', axis: 'x', intersect: false }
-    }
-  });
-}
-
-/* ---------- Utilities ---------- */
-function processedPointsToCSV(points){
-  const header = ['time_min','soc_percent','dSoC_dt'];
-  const lines = [header.join(',')];
-  points.forEach(p => {
-    const row = [p.time_min, p.soc_percent, p.dSoC_dt];
-    lines.push(row.join(','));
-  });
-  return lines.join('\n');
-}
-
-function downloadTextFile(text, filename){
-  const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-function escapeHtml(s){
-  if(!s && s !== 0) return '';
-  return String(s).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
-}
-
-/* ---------- Filter logic ---------- */
-function applyFilters(groups){
-  if(!groups) return [];
-  let out = groups.slice();
-
-  const brand = filterBrand.value;
-  const type = filterChgType.value;
-  const uploader = filterUploader.value;
-  const minP = filterPriceMin.value ? Number(filterPriceMin.value) : null;
-  const maxP = filterPriceMax.value ? Number(filterPriceMax.value) : null;
-  const selGroup = selectGroup.value;
-
-  if(brand) out = out.filter(g => g.hp_brand === brand);
-  if(type) out = out.filter(g => g.charger_type === type);
-  if(uploader) out = out.filter(g => g.uploader === uploader);
-  if(minP !== null) out = out.filter(g => Number(g.charger_price) >= minP);
-  if(maxP !== null) out = out.filter(g => Number(g.charger_price) <= maxP);
-  if(selGroup && selGroup !== 'all') out = out.filter(g => g.group_id === selGroup);
-
-  return out;
-}
-
-/* ---------- Init: load saved groups dan handlers ---------- */
-async function init(){
-  groupsCache = loadGroupsFromLocal();
-  populateFilters(groupsCache);
-  populateTable(groupsCache);
-  populateGroupSelect(groupsCache);
-  renderCharts(groupsCache);
-
-  // attach filter change listeners
-  [filterBrand, filterChgType, filterUploader, filterPriceMin, filterPriceMax, selectGroup].forEach(el => {
-    el.addEventListener('change', () => renderCharts(groupsCache));
-  });
-
-  // Jika URL memiliki ?group=ID, fokus ke grup tersebut
-  const params = new URLSearchParams(location.search);
-  const gid = params.get('group');
-  if(gid){
-    selectGroup.value = gid;
-    renderCharts(groupsCache);
-    // highlight row jika ada
+    updateCharts(it.samples, it.deriv);
+    // set hash so URL reflects current?
+    // no — only share via link button.
   }
-}
-window.addEventListener('load', init);
+
+  // CSV export helpers
+  function downloadCSV(filename, text){
+    const blob = new Blob([text], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+  function allToCsv(all){
+    // We'll export each item as a block with header line
+    let out = 'name,charger,phone,desc,point_index,time_s,soc_percent\n';
+    all.forEach(item=>{
+      item.samples.forEach((s, idx)=>{
+        out += `"${item.name}","${item.charger}","${item.phone}","${(item.desc||'').replace(/"/g,'""')}",${idx+1},${s.t},${s.soc}\n`;
+      });
+    });
+    return out;
+  }
+  function downloadSingleCSV(item){
+    let out = 'time_s,soc_percent\n';
+    item.samples.forEach(s=>{
+      out += `${s.t},${s.soc}\n`;
+    });
+    downloadCSV(`${sanitizeFilename(item.name||'exp')}.csv`, out);
+  }
+  function sanitizeFilename(s){
+    return (s||'export').replace(/[^\w\-]/g,'_');
+  }
+
+  // import CSV (expects same export format or simple time,soc lines)
+  function importCsvFile(file){
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const text = String(e.target.result || '');
+      // try detect full multi-item format: has header "name,charger,phone,desc,point_index,time_s,soc_percent"
+      if(/time_s\s*,\s*soc_percent/i.test(text) && !/name,charger,phone/i.test(text)){
+        // treat as single series
+        const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+        const samples = [];
+        for(const line of lines){
+          if(/time_s/i.test(line) && /soc_percent/i.test(line)) continue;
+          const parts = line.split(',');
+          if(parts.length<2) continue;
+          const t = Number(parts[0].trim()), soc = Number(parts[1].trim());
+          if(Number.isFinite(t) && Number.isFinite(soc)) samples.push({t,soc});
+        }
+        if(samples.length<2){ alert('File tidak berisi data yang valid.'); return; }
+        const name = prompt('Nama percobaan untuk data import?','Imported Experiment');
+        const charger = prompt('Merk charger?','Unknown');
+        const phone = prompt('Merk & model HP?','Unknown');
+        processAndSave({name, charger, phone, desc:'Diimport dari file', samples});
+      } else {
+        // try full export format: parse lines with time_s
+        // we'll group by name
+        const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+        const map = {};
+        for(const line of lines){
+          if(/time_s/i.test(line) && /soc_percent/i.test(line)) continue;
+          const parts = splitCsvLine(line);
+          // expected length 7 in our export: name,charger,phone,desc,point_index,time_s,soc_percent
+          if(parts.length < 7) continue;
+          const name = parts[0], charger = parts[1], phone = parts[2], desc = parts[3], time_s = Number(parts[5]), soc = Number(parts[6]);
+          if(!map[name]) map[name] = {name, charger, phone, desc, samples:[]};
+          if(Number.isFinite(time_s) && Number.isFinite(soc)) map[name].samples.push({t:time_s, soc});
+        }
+        const arr = Object.values(map);
+        if(arr.length === 0){ alert('Tidak menemukan data dalam file. Pastikan format CSV sesuai.'); return; }
+        arr.forEach(item => {
+          if(item.samples.length >= 2) processAndSave(item); // save and compute
+        });
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function splitCsvLine(line){
+    // simple CSV splitter handling quoted fields
+    const result = [];
+    let cur = ''; let inQuote = false;
+    for(let i=0;i<line.length;i++){
+      const ch = line[i];
+      if(ch === '"' ) { inQuote = !inQuote; continue; }
+      if(ch === ',' && !inQuote){ result.push(cur); cur=''; continue; }
+      cur += ch;
+    }
+    if(cur !== '') result.push(cur);
+    return result.map(s=>s.trim());
+  }
+
+  // process samples, compute derivative, save to storage
+  function processAndSave(item){
+    // ensure samples sorted
+    item.samples.sort((a,b)=>a.t - b.t);
+    if(item.samples.length < 2){ alert('Minimal 2 titik data diperlukan.'); return; }
+    const deriv = computeDerivative(item.samples);
+    item.deriv = deriv;
+    // save
+    const all = loadAll();
+    all.push(item);
+    saveAll(all);
+    renderTable();
+    // show last item
+    showItem(all.length - 1);
+    // center to results
+    window.scrollTo({top: document.querySelector('.results').offsetTop - 20, behavior:'smooth'});
+  }
+
+  // handle form submit
+  function attachHandlers(){
+    const form = qs('experimentForm');
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      const name = qs('expName').value.trim();
+      const charger = qs('chargerBrand').value.trim();
+      const phone = qs('phoneBrand').value.trim();
+      const desc = qs('desc').value.trim();
+      const csv = qs('csvData').value.trim();
+      if(!name || !charger || !phone || !csv){
+        alert('Lengkapi nama, merk charger, merk HP, dan data CSV.');
+        return;
+      }
+      const samples = parseCSVText(csv);
+      if(samples.length < 2){ alert('Minimal 2 titik data valid diperlukan. Periksa format CSV.'); return; }
+      processAndSave({name, charger, phone, desc, samples});
+      form.reset();
+    });
+
+    qs('loadExample').addEventListener('click', function(){
+      qs('expName').value = 'Contoh - Charger Fast 33W + HP X';
+      qs('chargerBrand').value = 'ContohCharger 33W';
+      qs('phoneBrand').value = 'ContohPhone X';
+      qs('desc').value = 'Contoh data pengisian (screen-off)';
+      qs('csvData').value = '0,18\n60,20\n120,23\n180,27\n240,32\n300,36';
+    });
+
+    qs('exportCsv').addEventListener('click', function(){
+      const all = loadAll();
+      if(!all.length){ alert('Belum ada data untuk diexport.'); return; }
+      const csv = allToCsv(all);
+      downloadCSV('mr_dsoc_all.csv', csv);
+    });
+
+    qs('clearAll').addEventListener('click', function(){
+      if(confirm('Hapus semua hasil tersimpan di browser ini?')){ localStorage.removeItem(STORAGE_KEY); renderTable(); qs('summary').innerHTML = '<p class="muted">Belum ada data.</p>'; if(socChart) socChart.destroy(); if(derivChart) derivChart.destroy(); socChart=null; derivChart=null; }
+    });
+
+    qs('importCsvFile').addEventListener('change', function(e){
+      const f = e.target.files[0];
+      if(f) importCsvFile(f);
+      e.target.value = '';
+    });
+
+    // hash handling: if url has hash that encodes an item, show it
+    if(location.hash && location.hash.length > 1){
+      try {
+        const decoded = decodeURIComponent(escape(atob(location.hash.substring(1))));
+        const item = JSON.parse(decoded);
+        // show item temporarily (not saving)
+        qs('summary').innerHTML = `<div><strong>${escapeHtml(item.name||'Shared')}</strong><p class="muted">${escapeHtml(item.desc||'')}</p></div>`;
+        updateCharts(item.samples, item.deriv);
+        // and offer to save
+        if(confirm('Tampilkan hasil dari link. Simpan hasil ini ke perangkat Anda? (OK = Simpan)')) processAndSave(item);
+      } catch(e){
+        console.warn('Tidak dapat decode hash:', e);
+      }
+    }
+  }
+
+  // initial render
+  function init(){
+    attachHandlers();
+    renderTable();
+    ensureCharts();
+  }
+
+  // start
+  document.addEventListener('DOMContentLoaded', init);
+})();
