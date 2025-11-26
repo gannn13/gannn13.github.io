@@ -1,115 +1,95 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mini-Riset: Analisis Efisiensi Charger — dSoC/dt</title>
-
-  <link rel="stylesheet" href="assets/css/styles.css" />
-
-  <!-- Chart.js CDN -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Analisis Efisiensi Charger HP – dSoC/dt</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/distribute/nouislider.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/distribute/nouislider.min.css">
 </head>
 <body>
-  <div class="app">
-    <header class="header">
-      <div class="brand">
-        <h1>Analisis Efisiensi Charger (dSoC/dt)</h1>
-        <p class="muted">Masukkan data merk charger & HP, lalu lihat proses turunan dan grafiknya.</p>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container">
+      <h1>Charger Efficiency</h1>
+      <div class="nav-right">
+        <button id="themeBtn" class="btn-theme">Dark Mode</button>
+        <button id="menuBtn" class="btn-menu">Menu</button>
       </div>
-    </header>
+    </div>
+  </nav>
 
-    <main class="main container">
-      <section class="panel">
-        <h2>Input Data Percobaan</h2>
-        <form id="experimentForm" class="form">
-          <div class="row">
-            <label>Nama percobaan</label>
-            <input id="expName" placeholder="Contoh: Charger ABC + HP X" required />
-          </div>
+  <div class="flex-container">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="upload-box">
+        <h2>Upload Data CSV</h2>
+        <input type="file" id="csvInput" accept=".csv" />
+        <p class="info-text">Kolom wajib: charger, time_min, soc_percent, hp_brand, charger_type, charger_price, uploader</p>
+      </div>
 
-          <div class="row">
-            <label>Merk Charger</label>
-            <input id="chargerBrand" placeholder="Contoh: Anker, Xiaomi" required />
-          </div>
+      <div class="filter-section">
+        <h3>Filter Data</h3>
+        <select id="filterBrand"><option>Semua HP</option></select>
+        <select id="filterType"><option>Semua Tipe Charger</option></select>
+        <select id="filterUploader"><option>Semua Uploader</option></select>
 
-          <div class="row">
-            <label>Merk & Model HP</label>
-            <input id="phoneBrand" placeholder="Contoh: Samsung A12" required />
-          </div>
+        <label>Harga (Rp)</label>
+        <div id="priceSlider"></div>
+        <p class="price-text" id="priceText">0 – 1.000.000</p>
 
-          <div class="row">
-            <label>Deskripsi singkat (opsional)</label>
-            <input id="desc" placeholder="Kondisi: HP mati, screen-off, dsb." />
-          </div>
+        <label class="checkbox-label">
+          <input type="checkbox" id="smoothing" /> Smoothing (Moving Average 3)
+        </label>
 
-          <div class="row">
-            <label>Data waktu & SoC (format CSV)</label>
-            <textarea id="csvData" placeholder="Format tiap baris: time_seconds,SoC_percent
-Contoh:
-0,20
-60,22
-120,25
-180,29
-240,33" rows="6" required></textarea>
-            <small class="muted">Waktu dalam detik (s), SoC dalam persen (0-100). Minimal 3 titik data.</small>
-          </div>
+        <button id="refreshBtn" class="btn-primary">Refresh Dashboard</button>
+      </div>
 
-          <div class="row actions">
-            <button type="submit" class="btn primary">Proses Data & Hitung Turunan</button>
-            <button type="button" id="loadExample" class="btn">Muat Contoh</button>
-          </div>
-        </form>
-      </section>
+      <div id="summaryContainer"></div>
+    </aside>
 
-      <section class="panel results">
-        <h2>Hasil Perhitungan</h2>
-        <div id="summary" class="summary">
-          <p class="muted">Belum ada data. Proses data untuk melihat hasil.</p>
+    <!-- Main -->
+    <main class="main-content">
+      <div class="header-main">
+        <h2>Dashboard Publik Real-Time</h2>
+        <button id="downloadBtn" class="btn-success">Download CSV + Turunan</button>
+      </div>
+
+      <div class="card">
+        <h3>Zoom Waktu (menit)</h3>
+        <div id="timeSlider"></div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="card">
+          <h3>State of Charge vs Waktu</h3>
+          <canvas id="socChart"></canvas>
         </div>
-
-        <div class="charts">
-          <canvas id="socChart" aria-label="Grafik SoC terhadap Waktu"></canvas>
-          <canvas id="derivChart" aria-label="Grafik dSoC/dt terhadap Waktu"></canvas>
+        <div class="card">
+          <h3>Laju Pengisian dSoC/dt (%/menit)</h3>
+          <canvas id="rateChart"></canvas>
         </div>
-
-        <div class="table-actions">
-          <button id="exportCsv" class="btn">Export Semua Hasil (CSV)</button>
-          <input type="file" id="importCsvFile" accept=".csv" />
-          <button id="clearAll" class="btn warn">Hapus Semua Simpanan</button>
-        </div>
-
-        <h3>Daftar Hasil Tersimpan</h3>
-        <div class="table-wrap">
-          <table id="resultsTable">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Nama</th>
-                <th>Charger</th>
-                <th>HP</th>
-                <th>Waktu sampel</th>
-                <th>Avg dSoC/dt (%/s)</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-
-        <div class="note">
-          <p class="muted">Bagikan hasil satu percobaan: klik ikon 🔗 di kolom Aksi untuk membuat link yang dapat dibuka orang lain (URL terenkode di hash). Mereka yang membuka link akan melihat hasil tersebut.</p>
-        </div>
-      </section>
+      </div>
     </main>
-
-    <footer class="footer">
-      <div class="container">
-        <small>Disiapkan untuk tugas mini-riset kalkulus diferensial — dSoC/dt · (Static site — siap di GitHub Pages)</small>
-      </div>
-    </footer>
   </div>
 
-  <script src="assets/js/app.js" defer></script>
+  <!-- Modal Nama -->
+  <div id="nameModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Masukkan Nama Kamu</h3>
+      <input type="text" id="uploaderName" placeholder="Nama uploader" />
+      <div class="modal-buttons">
+        <button onclick="closeNameModal()" class="btn-secondary">Batal</button>
+        <button onclick="processUpload()" class="btn-primary">Upload</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
