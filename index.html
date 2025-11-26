@@ -3,93 +3,96 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Analisis Efisiensi Charger HP – dSoC/dt</title>
+  <title>Analisis Efisiensi Charger HP - dSoC/dt</title>
+
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/distribute/nouislider.min.js"></script>
+  
+  <!-- Library CDN (pasti jalan di GitHub Pages) -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js">script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js">script>
+  <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/distribute/nouislider.min.js">script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/distribute/nouislider.min.css">
 </head>
 <body>
 
-  <!-- Navbar -->
-  <nav class="navbar">
-    <div class="container">
-      <h1>Charger Efficiency</h1>
-      <div class="nav-right">
-        <button id="themeBtn" class="btn-theme">Dark Mode</button>
-        <button id="menuBtn" class="btn-menu">Menu</button>
-      </div>
+<nav class="navbar">
+  <div class="container">
+    <h1>Charger Efficiency</h1>
+    <div class="nav-right">
+      <button id="themeBtn" class="btn-theme">Dark Mode</button>
+      <button id="menuBtn" class="btn-menu">Menu</button>
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <div class="flex-container">
-    <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar">
-      <div class="upload-box">
-        <h2>Upload Data CSV</h2>
-        <input type="file" id="csvInput" accept=".csv" />
-        <p class="info-text">Kolom wajib: charger, time_min, soc_percent, hp_brand, charger_type, charger_price, uploader</p>
-      </div>
+<div class="flex-container">
+  <aside id="sidebar" class="sidebar">
+    <div class="upload-box">
+      <h2>Upload CSV Baru</h2>
+      <input type="file" id="csvInput" accept=".csv" class="file-input" />
+      <p class="info-text">
+        Kolom wajib: charger,time_min,soc_percent,<br>
+        hp_brand,charger_type,charger_price,uploader
+      </p>
+    </div>
 
-      <div class="filter-section">
-        <h3>Filter Data</h3>
-        <select id="filterBrand"><option>Semua HP</option></select>
-        <select id="filterType"><option>Semua Tipe Charger</option></select>
-        <select id="filterUploader"><option>Semua Uploader</option></select>
+    <div class="filter-section">
+      <h3>Filter</h3>
+      <select id="filterBrand" class="select"><option>Semua HP</option></select>
+      <select id="filterType" class="select"><option>Semua Tipe Charger</option></select>
+      <select id="filterUploader" class="select"><option>Semua Uploader</option></select>
 
-        <label>Harga (Rp)</label>
-        <div id="priceSlider"></div>
-        <p class="price-text" id="priceText">0 – 1.000.000</p>
+      <label class="label">Harga (Rp)</label>
+      <div id="priceSlider" class="slider"></div>
+      <p class="price-text" id="priceText">0 – 1.000.000</p>
 
-        <label class="checkbox-label">
-          <input type="checkbox" id="smoothing" /> Smoothing (Moving Average 3)
-        </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="smoothing" /> Smoothing (Moving Avg 3)
+      </label>
 
-        <button id="refreshBtn" class="btn-primary">Refresh Dashboard</button>
-      </div>
+      <button id="refreshBtn" class="btn-primary">Refresh Dashboard</button>
+    </div>
 
-      <div id="summaryContainer"></div>
-    </aside>
+    <div id="summaryContainer" class="summary-grid"></div>
+  </aside>
 
-    <!-- Main -->
-    <main class="main-content">
-      <div class="header-main">
-        <h2>Dashboard Publik Real-Time</h2>
-        <button id="downloadBtn" class="btn-success">Download CSV + Turunan</button>
-      </div>
+  <main class="main-content">
+    <div class="header-main">
+      <h2>Dashboard Publik</h2>
+      <button id="downloadBtn" class="btn-success">Download CSV + dSoC/dt</button>
+    </div>
 
+    <div class="card">
+      <h3>Zoom Waktu (menit)</h3>
+      <div id="timeSlider" class="slider"></div>
+    </div>
+
+    <div class="charts-grid">
       <div class="card">
-        <h3>Zoom Waktu (menit)</h3>
-        <div id="timeSlider"></div>
+        <h3>SoC (%) vs Waktu</h3>
+        <canvas id="socChart">canvas>
       </div>
-
-      <div class="charts-grid">
-        <div class="card">
-          <h3>State of Charge vs Waktu</h3>
-          <canvas id="socChart"></canvas>
-        </div>
-        <div class="card">
-          <h3>Laju Pengisian dSoC/dt (%/menit)</h3>
-          <canvas id="rateChart"></canvas>
-        </div>
-      </div>
-    </main>
-  </div>
-
-  <!-- Modal Nama -->
-  <div id="nameModal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Masukkan Nama Kamu</h3>
-      <input type="text" id="uploaderName" placeholder="Nama uploader" />
-      <div class="modal-buttons">
-        <button onclick="closeNameModal()" class="btn-secondary">Batal</button>
-        <button onclick="processUpload()" class="btn-primary">Upload</button>
+      <div class="card">
+        <h3>dSoC/dt (%/menit)</h3>
+        <canvas id="rateChart">canvas>
       </div>
     </div>
-  </div>
+  </main>
+</div>
 
-  <script src="app.js"></script>
+<!-- Modal -->
+<div id="nameModal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Siapa nama kamu?</h3>
+    <input type="text" id="uploaderName" placeholder="Nama uploader" />
+    <div class="modal-buttons">
+      <button onclick="closeNameModal()" class="btn-secondary">Batal</button>
+      <button onclick="processUpload()" class="btn-primary">Upload</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js">script>
 </body>
 </html>
