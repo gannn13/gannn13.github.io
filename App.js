@@ -1,373 +1,320 @@
-// assets/js/app.js
-// Bahasa Indonesia UI, static-only, siap di GitHub Pages
-// Fitur:
-// - Input data CSV time(s),SoC(%)
-// - Hitung turunan numerik (dSoC/dt) menggunakan central difference
-// - Tampilkan grafik SoC vs waktu & dSoC/dt vs waktu (Chart.js)
-// - Simpan hasil ke localStorage, export/import CSV, shareable link (encoded in URL hash)
+// ========================================
+// CHARGER EFFICIENCY DASHBOARD – FULL JS
+// ========================================
 
-(function () {
-  // util
-  function qs(id){ return document.getElementById(id); }
-  function parseCSVText(txt){
-    // parse simple CSV: lines of "time,SoC"
-    const lines = txt.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
-    const data = [];
-    for(const line of lines){
-      const parts = line.split(',').map(p=>p.trim());
-      if(parts.length < 2) continue;
-      const t = Number(parts[0]);
-      const soc = Number(parts[1]);
-      if(Number.isFinite(t) && Number.isFinite(soc)) data.push({t, soc});
-    }
-    // sort by time ascending
-    data.sort((a,b)=>a.t - b.t);
-    return data;
-  }
+let rawData = [];        // semua dataset dari semua upload
+let filteredData = [];
+let socChart, rateChart;
+const colors = ['#3b82f6','ef4444','10b981','f59e0b','8b5cf6','ec4899','06b6d4','f97316'];
 
-  // numerical derivative using central differences
-  function computeDerivative(samples){
-    // samples: [{t: , soc: }, ...], t in seconds, soc in percent
-    // returns array of {t_mid, dSoCdt} aligned per midpoint or per sample index (we'll align to original samples using central diff)
-    const n = samples.length;
-    if(n < 2) return [];
-    const deriv = new Array(n).fill(null);
-    for(let i=0;i<n;i++){
-      if(i===0){
-        // forward difference
-        const dt = samples[i+1].t - samples[i].t;
-        deriv[i] = (samples[i+1].soc - samples[i].soc)/dt;
-      } else if(i===n-1){
-        // backward difference
-        const dt = samples[i].t - samples[i-1].t;
-        deriv[i] = (samples[i].soc - samples[i-1].soc)/dt;
-      } else {
-        // central difference
-        const dt = samples[i+1].t - samples[i-1].t;
-        deriv[i] = (samples[i+1].soc - samples[i-1].soc)/dt;
-      }
-    }
-    // return as percent-per-second
-    return deriv;
-  }
+// Dark mode toggle
+document.getElementById('themeBtn').addEventListener('click', () => {
+  document.documentElement.classList.toggle('dark');
+  localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+  document.getElementById('themeBtn').innerHTML = document.documentElement.classList.contains('dark') ? 'Light Mode' : 'Dark Mode';
+});
+if (localStorage.theme === 'dark') document.documentElement.classList.add('dark');
 
-  function formatNumber(x, dp=3){
-    return (Math.round(x * Math.pow(10, dp))/Math.pow(10, dp)).toString();
-  }
+// Mobile menu
+document.getElementById('menuBtn').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+});
 
-  // storage
-  const STORAGE_KEY = 'mr_dsoc_results_v1';
-  function loadAll(){
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return [];
-      return JSON.parse(raw);
-    } catch(e){ return []; }
-  }
-  function saveAll(arr){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-  }
+// Inisialisasi slider
+noUiSlider.create(document.getElementById('priceSlider'), {
+  start: [0, 1000000],
+  connect: true,
+  step: 10000,
+  range: { min: 0, max: 1000000 },
+  format: { to: v => Math.round(v).toLocaleString('id-ID'), from: v => Number(v) }
+});
+document.getElementById('priceSlider').noUiSlider.on('update', (values) => {
+  document.getElementById('priceText').textContent = values[0] + ' – ' + values[1];
+});
 
-  // Charts
-  let socChart = null;
-  let derivChart = null;
-  function ensureCharts(){
-    const socCtx = qs('socChart').getContext('2d');
-    const derivCtx = qs('derivChart').getContext('2d');
-    if(!socChart){
-      socChart = new Chart(socCtx, {
-        type: 'line',
-        data: { labels: [], datasets: [{
-          label: 'SoC (%)',
-          data: [],
-          borderWidth: 2,
-          tension: 0.25,
-          fill: false,
-        }]},
-        options: { responsive:true, plugins:{legend:{display:true}}, scales:{x:{title:{display:true,text:'Waktu (s)'}}, y:{title:{display:true,text:'SoC (%)'}}} }
-      });
-    }
-    if(!derivChart){
-      derivChart = new Chart(derivCtx, {
-        type: 'line',
-        data: { labels: [], datasets: [{
-          label: 'dSoC/dt (%/s)',
-          data: [],
-          borderWidth: 2,
-          tension: 0.25,
-          fill: false
-        }]},
-        options: { responsive:true, plugins:{legend:{display:true}}, scales:{x:{title:{display:true,text:'Waktu (s)'}}, y:{title:{display:true,text:'dSoC/dt (%/s)'}}} }
-      });
-    }
-  }
+noUiSlider.create(document.getElementById('timeSlider'), {
+  start: [0, 120],
+  connect: true,
+  step: 1,
+  range: { min: 0, max: 120 }
+});
 
-  function updateCharts(samples, derivs){
-    ensureCharts();
-    const labels = samples.map(s=>s.t);
-    socChart.data.labels = labels;
-    socChart.data.datasets[0].data = samples.map(s=>s.soc);
-    socChart.update();
+// Sample data (langsung muncul saat pertama buka)
+const sampleCSV = `charger,time_min,soc_percent,hp_brand,charger_type,charger_price,uploader
+Anker PowerPort,0,10,Xiaomi 13,PD 65W,350000,Budi
+Anker PowerPort,5,28,Xiaomi 13,PD 65W,350000,Budi
+Anker PowerPort,10,51,Xiaomi 13,PD 65W,350000,Budi
+Anker PowerPort,15,72,Xiaomi 13,PD 65W,350000,Budi
+Baseus GaN,0,15,Samsung S23,QC 4.0 25W,180000,Citra
+Baseus GaN,10,38,Samsung S23,QC 4.0 25W,180000,Citra
+Baseus GaN,20,65,Samsung S23,QC 4.0 25W,180000,Citra
+Original Apple,0,20,iPhone 14,Lightning 20W,450000,Dewi
+Original Apple,15,55,iPhone 14,Lightning 20W,450000,Dewi
+Original Apple,30,82,iPhone 14,Lightning 20W,450000,Dewi
+`;
 
-    derivChart.data.labels = labels;
-    derivChart.data.datasets[0].data = derivs;
-    derivChart.update();
+Papa.parse(sampleCSV, {
+  header: true,
+  complete: (res) => {
+    rawData = groupAndProcess(res.data);
+    updateEverything();
   }
+});
 
-  // UI rendering
-  function renderTable(){
-    const all = loadAll();
-    const tbody = qs('resultsTable').querySelector('tbody');
-    tbody.innerHTML = '';
-    all.forEach((item, idx) => {
-      const tr = document.createElement('tr');
-      const avgDeriv = item.deriv && item.deriv.length ? (item.deriv.reduce((a,b)=>a+b,0)/item.deriv.length) : 0;
-      tr.innerHTML = `
-        <td>${idx+1}</td>
-        <td>${escapeHtml(item.name)}</td>
-        <td>${escapeHtml(item.charger)}</td>
-        <td>${escapeHtml(item.phone)}</td>
-        <td>${item.samples.length} titik</td>
-        <td>${formatNumber(avgDeriv,5)}</td>
-        <td>
-          <button data-idx="${idx}" class="btn small view">Lihat</button>
-          <button data-idx="${idx}" class="btn small link">🔗</button>
-          <button data-idx="${idx}" class="btn small export">CSV</button>
-          <button data-idx="${idx}" class="btn small del warn">Hapus</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-    // attach handlers
-    tbody.querySelectorAll('button.view').forEach(b=>{
-      b.addEventListener('click', e=>{
-        const i = Number(e.currentTarget.dataset.idx); showItem(i);
-      });
-    });
-    tbody.querySelectorAll('button.del').forEach(b=>{
-      b.addEventListener('click', e=>{
-        const i = Number(e.currentTarget.dataset.idx);
-        if(confirm('Hapus item #' + (i+1) + ' secara permanen?')) {
-          const all = loadAll(); all.splice(i,1); saveAll(all); renderTable();
-        }
-      });
-    });
-    tbody.querySelectorAll('button.link').forEach(b=>{
-      b.addEventListener('click', e=>{
-        const i = Number(e.currentTarget.dataset.idx);
-        const all = loadAll();
-        const item = all[i];
-        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(item))));
-        const url = location.origin + location.pathname + '#' + encoded;
-        prompt('Salin link ini untuk dibagikan (buka di browser lain untuk melihat hasil):', url);
-      });
-    });
-    tbody.querySelectorAll('button.export').forEach(b=>{
-      b.addEventListener('click', e=>{
-        const i = Number(e.currentTarget.dataset.idx);
-        const all = loadAll();
-        downloadSingleCSV(all[i]);
-      });
-    });
-  }
-
-  function escapeHtml(s){
-    return (s+'').replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; });
-  }
-
-  function showItem(idx){
-    const all = loadAll();
-    const it = all[idx];
-    if(!it) return;
-    // update summary
-    const avg = it.deriv.reduce((a,b)=>a+b,0)/it.deriv.length;
-    qs('summary').innerHTML = `
-      <div>
-        <strong>${escapeHtml(it.name)}</strong> — Charger: ${escapeHtml(it.charger)}, HP: ${escapeHtml(it.phone)}
-        <p class="muted">${escapeHtml(it.desc || '')}</p>
-        <p>Rata-rata dSoC/dt: <strong>${formatNumber(avg,5)}</strong> %/s</p>
-        <p>Jumlah titik sampel: ${it.samples.length}</p>
-      </div>
-    `;
-    updateCharts(it.samples, it.deriv);
-    // set hash so URL reflects current?
-    // no — only share via link button.
-  }
-
-  // CSV export helpers
-  function downloadCSV(filename, text){
-    const blob = new Blob([text], {type: 'text/csv'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(url);
-  }
-  function allToCsv(all){
-    // We'll export each item as a block with header line
-    let out = 'name,charger,phone,desc,point_index,time_s,soc_percent\n';
-    all.forEach(item=>{
-      item.samples.forEach((s, idx)=>{
-        out += `"${item.name}","${item.charger}","${item.phone}","${(item.desc||'').replace(/"/g,'""')}",${idx+1},${s.t},${s.soc}\n`;
-      });
-    });
-    return out;
-  }
-  function downloadSingleCSV(item){
-    let out = 'time_s,soc_percent\n';
-    item.samples.forEach(s=>{
-      out += `${s.t},${s.soc}\n`;
-    });
-    downloadCSV(`${sanitizeFilename(item.name||'exp')}.csv`, out);
-  }
-  function sanitizeFilename(s){
-    return (s||'export').replace(/[^\w\-]/g,'_');
-  }
-
-  // import CSV (expects same export format or simple time,soc lines)
-  function importCsvFile(file){
-    const reader = new FileReader();
-    reader.onload = function(e){
-      const text = String(e.target.result || '');
-      // try detect full multi-item format: has header "name,charger,phone,desc,point_index,time_s,soc_percent"
-      if(/time_s\s*,\s*soc_percent/i.test(text) && !/name,charger,phone/i.test(text)){
-        // treat as single series
-        const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
-        const samples = [];
-        for(const line of lines){
-          if(/time_s/i.test(line) && /soc_percent/i.test(line)) continue;
-          const parts = line.split(',');
-          if(parts.length<2) continue;
-          const t = Number(parts[0].trim()), soc = Number(parts[1].trim());
-          if(Number.isFinite(t) && Number.isFinite(soc)) samples.push({t,soc});
-        }
-        if(samples.length<2){ alert('File tidak berisi data yang valid.'); return; }
-        const name = prompt('Nama percobaan untuk data import?','Imported Experiment');
-        const charger = prompt('Merk charger?','Unknown');
-        const phone = prompt('Merk & model HP?','Unknown');
-        processAndSave({name, charger, phone, desc:'Diimport dari file', samples});
-      } else {
-        // try full export format: parse lines with time_s
-        // we'll group by name
-        const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
-        const map = {};
-        for(const line of lines){
-          if(/time_s/i.test(line) && /soc_percent/i.test(line)) continue;
-          const parts = splitCsvLine(line);
-          // expected length 7 in our export: name,charger,phone,desc,point_index,time_s,soc_percent
-          if(parts.length < 7) continue;
-          const name = parts[0], charger = parts[1], phone = parts[2], desc = parts[3], time_s = Number(parts[5]), soc = Number(parts[6]);
-          if(!map[name]) map[name] = {name, charger, phone, desc, samples:[]};
-          if(Number.isFinite(time_s) && Number.isFinite(soc)) map[name].samples.push({t:time_s, soc});
-        }
-        const arr = Object.values(map);
-        if(arr.length === 0){ alert('Tidak menemukan data dalam file. Pastikan format CSV sesuai.'); return; }
-        arr.forEach(item => {
-          if(item.samples.length >= 2) processAndSave(item); // save and compute
-        });
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  function splitCsvLine(line){
-    // simple CSV splitter handling quoted fields
-    const result = [];
-    let cur = ''; let inQuote = false;
-    for(let i=0;i<line.length;i++){
-      const ch = line[i];
-      if(ch === '"' ) { inQuote = !inQuote; continue; }
-      if(ch === ',' && !inQuote){ result.push(cur); cur=''; continue; }
-      cur += ch;
-    }
-    if(cur !== '') result.push(cur);
-    return result.map(s=>s.trim());
-  }
-
-  // process samples, compute derivative, save to storage
-  function processAndSave(item){
-    // ensure samples sorted
-    item.samples.sort((a,b)=>a.t - b.t);
-    if(item.samples.length < 2){ alert('Minimal 2 titik data diperlukan.'); return; }
-    const deriv = computeDerivative(item.samples);
-    item.deriv = deriv;
-    // save
-    const all = loadAll();
-    all.push(item);
-    saveAll(all);
-    renderTable();
-    // show last item
-    showItem(all.length - 1);
-    // center to results
-    window.scrollTo({top: document.querySelector('.results').offsetTop - 20, behavior:'smooth'});
-  }
-
-  // handle form submit
-  function attachHandlers(){
-    const form = qs('experimentForm');
-    form.addEventListener('submit', function(e){
-      e.preventDefault();
-      const name = qs('expName').value.trim();
-      const charger = qs('chargerBrand').value.trim();
-      const phone = qs('phoneBrand').value.trim();
-      const desc = qs('desc').value.trim();
-      const csv = qs('csvData').value.trim();
-      if(!name || !charger || !phone || !csv){
-        alert('Lengkapi nama, merk charger, merk HP, dan data CSV.');
+// Upload CSV
+document.getElementById('csvInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: (result) => {
+      if (!validateHeaders(result.meta.fields)) {
+        alert('Header CSV salah! Wajib: charger,time_min,soc_percent,hp_brand,charger_type,charger_price,uploader');
         return;
       }
-      const samples = parseCSVText(csv);
-      if(samples.length < 2){ alert('Minimal 2 titik data valid diperlukan. Periksa format CSV.'); return; }
-      processAndSave({name, charger, phone, desc, samples});
-      form.reset();
-    });
-
-    qs('loadExample').addEventListener('click', function(){
-      qs('expName').value = 'Contoh - Charger Fast 33W + HP X';
-      qs('chargerBrand').value = 'ContohCharger 33W';
-      qs('phoneBrand').value = 'ContohPhone X';
-      qs('desc').value = 'Contoh data pengisian (screen-off)';
-      qs('csvData').value = '0,18\n60,20\n120,23\n180,27\n240,32\n300,36';
-    });
-
-    qs('exportCsv').addEventListener('click', function(){
-      const all = loadAll();
-      if(!all.length){ alert('Belum ada data untuk diexport.'); return; }
-      const csv = allToCsv(all);
-      downloadCSV('mr_dsoc_all.csv', csv);
-    });
-
-    qs('clearAll').addEventListener('click', function(){
-      if(confirm('Hapus semua hasil tersimpan di browser ini?')){ localStorage.removeItem(STORAGE_KEY); renderTable(); qs('summary').innerHTML = '<p class="muted">Belum ada data.</p>'; if(socChart) socChart.destroy(); if(derivChart) derivChart.destroy(); socChart=null; derivChart=null; }
-    });
-
-    qs('importCsvFile').addEventListener('change', function(e){
-      const f = e.target.files[0];
-      if(f) importCsvFile(f);
-      e.target.value = '';
-    });
-
-    // hash handling: if url has hash that encodes an item, show it
-    if(location.hash && location.hash.length > 1){
-      try {
-        const decoded = decodeURIComponent(escape(atob(location.hash.substring(1))));
-        const item = JSON.parse(decoded);
-        // show item temporarily (not saving)
-        qs('summary').innerHTML = `<div><strong>${escapeHtml(item.name||'Shared')}</strong><p class="muted">${escapeHtml(item.desc||'')}</p></div>`;
-        updateCharts(item.samples, item.deriv);
-        // and offer to save
-        if(confirm('Tampilkan hasil dari link. Simpan hasil ini ke perangkat Anda? (OK = Simpan)')) processAndSave(item);
-      } catch(e){
-        console.warn('Tidak dapat decode hash:', e);
+      const needsName = result.data.some(row => !row.uploader || row.uploader.trim() === '');
+      if (needsName) {
+        currentParseResult = result.data;
+        document.getElementById('nameModal').classList.remove('hidden');
+      } else {
+        addNewData(result.data);
       }
     }
-  }
+  });
+});
 
-  // initial render
-  function init(){
-    attachHandlers();
-    renderTable();
-    ensureCharts();
-  }
+let currentParseResult = null;
+function closeNameModal() { document.getElementById('nameModal').classList.add('hidden'); }
+function processUpload() {
+  const name = document.getElementById('uploaderName').value.trim() || 'Anonymous';
+  currentParseResult.forEach(row => row.uploader = name);
+  addNewData(currentParseResult);
+  closeNameModal();
+}
 
-  // start
-  document.addEventListener('DOMContentLoaded', init);
-})();
+function validateHeaders(fields) {
+  const req = ['charger','time_min','soc_percent','hp_brand','charger_type','charger_price'];
+  return req.every(h => fields.map(f=>f.toLowerCase()).includes(h.toLowerCase()));
+}
+
+function addNewData(newRows) {
+  newRows.forEach(r => {
+    r.time_min = Number(r.time_min);
+    r.soc_percent = Number(r.soc_percent);
+    r.charger_price = Number(r.charger_price) || 0;
+  });
+  const grouped = groupAndProcess(newRows);
+  rawData.push(...Object.values(grouped));
+  updateEverything();
+  alert('Upload berhasil! Data sudah ditambahkan ke dashboard publik');
+}
+
+// Grouping + Turunan Numerik
+function groupAndProcess(rows) {
+  const map = {};
+  rows.forEach(row => {
+    const key = `${row.charger}|${row.hp_brand}|${row.charger_type}|${row.charger_price}|${row.uploader}`;
+    if (!map[key]) map[key] = [];
+    map[key].push(row);
+  });
+
+  const result = [];
+  Object.values(map).forEach(arr => {
+    arr.sort((a,b) => a.time_min - b.time_min);
+    // Hapus duplikat waktu
+    const clean = [];
+    arr.forEach(p => {
+      const existing = clean.find(x => x.time_min === p.time_min);
+      if (existing) existing.soc_percent = (existing.soc_percent + p.soc_percent)/2;
+      else clean.push(p);
+    });
+
+    // Hitung turunan central difference
+    const points = clean.map(p => ({t: p.time_min, s: p.soc_percent}));
+    const derivative = [];
+    for (let i = 0; i < points.length; i++) {
+      if (i === 0) derivative.push((points[1].s - points[0].s)/(points[1].t - points[0].t));
+      else if (i === points.length-1) derivative.push((points[i].s - points[i-1].s)/(points[i].t - points[i-1].t));
+      else derivative.push((points[i+1].s - points[i-1].s)/(points[i+1].t - points[i-1].t));
+    }
+
+    result.push({
+      key: key,
+      label: `${arr[0].charger} – ${arr[0].hp_brand} (${arr[0].charger_type})`,
+      price: arr[0].charger_price,
+      uploader: arr[0].uploader,
+      points: points,
+      derivative: derivative,
+      color: '#'+colors[result.length % colors.length]
+    });
+  });
+  return result;
+}
+
+// Update semua komponen
+function updateEverything() {
+  updateFilters();
+  applyFilters();
+  renderSummary();
+}
+
+// Filter
+function applyFilters() {
+  const brand = document.getElementById('filterBrand').value;
+  const type = document.getElementById('filterType').value;
+  const [minP, maxP] = document.getElementById('priceSlider').noUiSlider.get();
+  const uploader = document.getElementById('filterUploader').value;
+  const [minT, maxT] = document.getElementById('timeSlider').noUiSlider.get();
+
+  filteredData = rawData.filter(d => {
+    if (brand !== 'Semua HP' && !d.label.includes(brand)) return false;
+    if (type !== 'Semua Tipe Charger' && !d.label.includes(type)) return false;
+    if (d.price < minP || d.price > maxP) return false;
+    if (uploader !== 'Semua Uploader' && d.uploader !== uploader) return false;
+    return true;
+  });
+
+  renderCharts();
+}
+
+function updateFilters() {
+  const brands = [...new Set(rawData.map(d => d.label.split(' – ')[1].split(' (')[0]))];
+  const types = [...new Set(rawData.map(d => d.label.split('(')[1].slice(0,-1)))];
+  const uploaders = [...new Set(rawData.map(d => d.uploader))];
+
+  const brandSel = document.getElementById('filterBrand');
+  brandSel.innerHTML = '<option>Semua HP</option>';
+  brands.forEach(b => { const opt = document.createElement('option'); opt.textContent = b; brandSel.append(opt); });
+
+  const typeSel = document.getElementById('filterType');
+  typeSel.innerHTML = '<option>Semua Tipe Charger</option>';
+  types.forEach(t => { const opt = document.createElement('option'); opt.textContent = t; typeSel.append(opt); });
+
+  const upSel = document.getElementById('filterUploader');
+  upSel.innerHTML = '<option>Semua Uploader</option>';
+  uploaders.forEach(u => { const opt = document.createElement('option'); opt.textContent = u; upSel.append(opt); });
+}
+
+// Render Summary Cards
+function renderSummary() {
+  const container = document.getElementById('summaryContainer');
+  container.innerHTML = '';
+  filteredData.forEach(d => {
+    const avgRate = d.derivative.reduce((a,b)=>a+b,0)/d.derivative.length).toFixed(2);
+    const status = avgRate > 1.8 ? 'Fast' : avgRate > 1 ? 'Moderate' : 'Slow';
+    const colorClass = status === 'Fast' ? 'text-green-600' : status === 'Moderate' ? 'text-yellow-600' : 'text-red-600';
+
+    const card = document.createElement('div');
+    card.className = 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-900 p-5 rounded-xl shadow';
+    card.innerHTML = `
+      <p class="font-bold text-lg">${d.label}</p>
+      <p class="text-sm">Uploader: ${d.uploader}</p>
+      <p class="text-3xl font-black mt-3 ${colorClass}">${avgRate} %/min</p>
+      <p class="text-sm">Status: <span class="font-bold">${status}</span></p>
+      <p class="text-sm">Harga: Rp ${d.price.toLocaleString('id-ID')}</p>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// Render Charts
+function renderCharts() {
+  const ctx1 = document.getElementById('socChart').getContext('2d');
+  const ctx2 = document.getElementById('rateChart').getContext('2d');
+  const [minT, maxT] = document.getElementById('timeSlider').noUiSlider.get();
+  const smoothing = document.getElementById('smoothing').checked;
+
+  const datasetsSoc = [];
+  const datasetsRate = [];
+
+  filteredData.forEach((d, i) => {
+    let t = d.points.map(p => p.t);
+    let s = d.points.map(p => p.s);
+    let r = [...d.derivative];
+
+    // Smoothing optional
+    if (smoothing) {
+      s = movingAverage(s, 3);
+      r = movingAverage(r, 3);
+    }
+
+    // Filter waktu
+    const filtered = t.map((time, idx) => ({t: time, s: s[idx], r: r[idx]})).filter(p => p.t >= minT && p.t <= maxT);
+
+    datasetsSoc.push({
+      label: d.label,
+      data: filtered.map(p => ({x: p.t, y: p.s})),
+      borderColor: d.color,
+      backgroundColor: d.color + '20',
+      tension: 0.3,
+      fill: false
+    });
+
+    datasetsRate.push({
+      label: d.label,
+      data: filtered.map(p => ({x: p.t, y: p.r})),
+      borderColor: d.color,
+      backgroundColor: d.color + '40',
+      tension: 0.2,
+      fill: false
+    });
+  });
+
+  if (socChart) socChart.destroy();
+  if (rateChart) rateChart.destroy();
+
+  socChart = new Chart(ctx1, { type: 'line', data: {datasets: datasetsSoc}, options: chartOptions('Waktu (menit)', 'SoC (%)') });
+  rateChart = new Chart(ctx2, { type: 'line', data: {datasets: datasetsRate}, options: chartOptions('Waktu (menit)', 'dSoC/dt (%/menit)') });
+}
+
+function chartOptions(xlabel, ylabel) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' }, tooltip: { mode: 'index', intersect: false }},
+    scales: {
+      x: { title: { display: true, text: xlabel }},
+      y: { title: { display: true, text: ylabel }}
+    }
+  };
+}
+
+function movingAverage(arr, window) {
+  const result = [];
+  for (let i = 0; i < arr.length; i++) {
+    let sum = 0, count = 0;
+    for (let j = Math.max(0, i-window+1); j <= Math.min(arr.length-1, i+window-1); j++) {
+      sum += arr[j]; count++;
+    }
+    result.push(sum/count);
+  }
+  return result;
+}
+
+// Download CSV
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  let csv = 'charger,hp_brand,charger_type,charger_price,uploader,time_min,soc_percent,dSoC_dt\n';
+  filteredData.forEach(d => {
+    d.points.forEach((p, i) => {
+      csv += `${d.label.split(' – ')[0]},${d.label.split(' – ')[1].split(' (')[0]},${d.label.split('(')[1].slice(0,-1)},${d.price},${d.uploader},${p.t},${p.s},${d.derivative[i].toFixed(3)}\n`;
+    });
+  });
+  const blob = new Blob([csv], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'charger_analysis_with_derivative.csv';
+  a.click();
+});
+
+// Event listener filter
+document.getElementById('refreshBtn').addEventListener('click', applyFilters);
+document.getElementById('smoothing').addEventListener('change', renderCharts);
+document.getElementById('filterBrand').addEventListener('change', applyFilters);
+document.getElementById('filterType').addEventListener('change', applyFilters);
+document.getElementById('filterUploader').addEventListener('change', applyFilters);
+document.getElementById('priceSlider').noUiSlider.on('change', applyFilters);
+document.getElementById('timeSlider').noUiSlider.on('change', renderCharts);
+
+// Jalankan pertama kali
+updateEverything();
