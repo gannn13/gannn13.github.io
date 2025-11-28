@@ -13,167 +13,212 @@
 
     <style>
         :root {
-            --bg: #0b1120;
-            --card: rgba(15, 25, 50, 0.7);
-            --primary: #2563eb;
-            --accent: #60a5fa;
-            --glow: #3b82f6;
-            --text: #f1f5f9;
-            --muted: #94a3b8;
+            --bg: #000000;
+            --bg-secondary: #0a0a0a;
+            --card: rgba(20, 20, 40, 0.8);
+            --primary: #1e3a8a;
+            --accent: #3b82f6;
+            --glow: #60a5fa;
+            --text: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --border: rgba(59, 130, 246, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
         }
-        * { margin:0; padding:0; box-sizing:border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, #0b1120 0%, #1e293b 100%);
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
             color: var(--text);
             min-height: 100vh;
-            padding: 20px 10px;
-            background-image: radial-gradient(circle at 10% 20%, rgba(37,99,235,0.2) 0%, transparent 90%, transparent 90%);
+            padding: 0;
+            line-height: 1.7;
+            overflow-x: hidden;
         }
-        .container { max-width: 1300px; margin: 0 auto; }
-
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
         header {
             text-align: center;
-            padding: 40px 20px;
-            background: linear-gradient(135deg, #1e40af, #3b82f6);
-            border-radius: 24px;
-            margin-bottom: 30px;
-            box-shadow: 0 20px 50px rgba(37,99,235,0.4);
+            padding: 60px 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 0 0 30px 30px;
+            margin-bottom: 40px;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 20px 60px rgba(59, 130, 246, 0.3);
         }
         header::before {
             content: '';
             position: absolute;
-            top: -50%; left: -50%;
-            width: 200%; height: 200%;
-            background: conic-gradient(from 0deg, transparent, rgba(96,165,250,0.3), transparent);
-            animation: rotate 20s linear infinite;
+            inset: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%);
+            animation: shimmer 3s ease-in-out infinite alternate;
         }
-        @keyframes rotate { to { transform: rotate(360deg); } }
-
-        .title {
-            font-size: 2.4em;
-            font-weight: 800;
-            color: white;
-            text-shadow: 0 0 20px rgba(96,165,250,0.8);
-            margin: 10px 0;
-        }
-        .subtitle { font-size: 1.2em; opacity: 0.9; color: #ddd; }
-
+        @keyframes shimmer { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+        .title { font-size: 2.8em; font-weight: 800; color: white; text-shadow: 0 0 30px rgba(255,255,255,0.5); margin-bottom: 10px; }
+        .subtitle { font-size: 1.3em; color: rgba(255,255,255,0.9); }
         .badge {
             display: inline-block;
-            background: #dc2626;
+            background: linear-gradient(45deg, #ef4444, #f59e0b);
             color: white;
-            padding: 8px 20px;
+            padding: 10px 25px;
             border-radius: 50px;
-            font-weight: bold;
-            margin-top: 15px;
-            box-shadow: 0 0 20px rgba(220,38,38,0.5);
+            font-weight: 600;
+            margin: 20px 0;
+            box-shadow: 0 0 20px rgba(239,68,68,0.4);
+            animation: pulse-badge 2s infinite;
         }
+        @keyframes pulse-badge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .group-info { font-size: 1.1em; color: rgba(255,255,255,0.8); margin-top: 15px; }
 
         .card {
             background: var(--card);
-            backdrop-filter: blur(12px);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            border: 1px solid rgba(96,165,250,0.2);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: all 0.4s;
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 35px;
+            margin-bottom: 35px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 30px rgba(59,130,246,0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
-        .card:hover { transform: translateY(-10px); box-shadow: 0 20px 50px rgba(59,130,246,0.3); }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 40px rgba(59,130,246,0.2);
+            border-color: var(--accent);
+        }
 
         h2 {
             color: var(--accent);
-            font-size: 1.7em;
-            margin-bottom: 20px;
-            border-bottom: 3px solid var(--primary);
-            padding-bottom: 10px;
-            display: inline-block;
+            font-size: 1.8em;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
+        h2::before { content: '⚡'; font-size: 1.2em; }
+        h3 { color: var(--text-secondary); font-size: 1.3em; margin: 20px 0 15px; }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            background: rgba(15,23,42,0.6);
+            background: rgba(10,10,20,0.7);
             border-radius: 16px;
             overflow: hidden;
             margin: 20px 0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
         th {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--accent));
             color: white;
-            padding: 16px;
+            padding: 18px;
             font-weight: 600;
+            text-align: center;
         }
-        td { padding: 14px; text-align: center; border-bottom: 1px solid #334155; }
+        td { padding: 16px; text-align: center; border-bottom: 1px solid rgba(59,130,246,0.1); }
         input {
             width: 100%;
-            padding: 12px;
-            background: #1e293b;
-            border: none;
-            border-radius: 10px;
-            color: white;
+            padding: 14px;
+            background: rgba(30,41,59,0.8);
+            border: 1px solid transparent;
+            border-radius: 12px;
+            color: var(--text);
             font-size: 1em;
+            transition: border-color 0.3s;
         }
-        input:focus { outline: 2px solid var(--accent); }
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
 
         button {
-            padding: 14px 24px;
+            padding: 14px 28px;
             border: none;
-            border-radius: 12px;
-            font-weight: bold;
+            border-radius: 14px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            font-size: 1em;
+            gap: 8px;
         }
         .btn {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--accent));
             color: white;
+            box-shadow: 0 4px 15px rgba(59,130,246,0.3);
         }
         .btn:hover {
-            background: #1d4ed8;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(37,99,235,0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59,130,246,0.4);
         }
-        .btn-danger { background: #dc2626; }
-        .btn-success { background: #16a34a; width: 100%; font-size: 1.1em; padding: 18px; }
+        .btn-danger { background: linear-gradient(135deg, #dc2626, #ef4444); color: white; }
+        .btn-success { background: linear-gradient(135deg, #059669, #10b981); color: white; width: 100%; padding: 20px; font-size: 1.1em; }
 
         .formula-box {
-            background: linear-gradient(135deg, rgba(37,99,235,0.15), rgba(96,165,250,0.1));
-            padding: 30px;
+            background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(96,165,250,0.05));
+            padding: 35px;
             border-radius: 20px;
-            border: 1px solid var(--accent);
+            border: 1px solid var(--border);
             margin: 25px 0;
-            box-shadow: 0 0 30px rgba(96,165,250,0.2);
+            box-shadow: 0 0 40px rgba(59,130,246,0.1);
         }
         .math {
-            background: rgba(15,23,42,0.9);
-            padding: 20px;
-            border-radius: 14px;
-            margin: 18px 0;
-            font-size: 1.25em;
+            background: rgba(10,10,20,0.9);
+            padding: 25px;
+            border-radius: 16px;
+            margin: 20px 0;
+            font-size: 1.3em;
             text-align: center;
-            border-left: 6px solid var(--accent);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border-left: 5px solid var(--accent);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            line-height: 1.5;
         }
 
-        canvas {
+        .analysis-box {
+            background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.05));
+            padding: 25px;
             border-radius: 16px;
-            background: var(--card);
-            padding: 15px;
-            margin: 15px 0;
+            border-left: 5px solid var(--success);
+            margin: 20px 0;
+        }
+        .analysis-box.warning {
+            background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(251,146,60,0.05));
+            border-left-color: var(--warning);
+        }
+        .analysis-box.danger {
+            background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(248,113,113,0.05));
+            border-left-color: var(--danger);
+        }
+        .analysis-title { font-size: 1.2em; font-weight: 600; margin-bottom: 10px; color: var(--success); }
+        .analysis-title.warning { color: var(--warning); }
+        .analysis-title.danger { color: var(--danger); }
+
+        canvas {
+            border-radius: 20px;
+            background: rgba(10,10,20,0.7);
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
 
         .footer {
             text-align: center;
-            padding: 40px;
-            color: var(--muted);
+            padding: 50px 20px;
+            color: var(--text-secondary);
             font-size: 1em;
-            margin-top: 50px;
-            border-top: 1px solid #334155;
+            border-top: 1px solid var(--border);
+            margin-top: 60px;
         }
         .footer strong { color: var(--accent); }
 
@@ -181,28 +226,63 @@
             position: fixed;
             bottom: 30px;
             right: 30px;
-            width: 60px;
-            height: 60px;
-            background: var(--primary);
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
             color: white;
             border-radius: 50%;
-            font-size: 28px;
-            box-shadow: 0 0 30px rgba(37,99,235,0.7);
+            font-size: 24px;
+            box-shadow: 0 0 40px rgba(59,130,246,0.5);
             animation: pulse 2s infinite;
             z-index: 999;
             border: none;
             cursor: pointer;
+            transition: transform 0.3s;
         }
+        .floating:hover { transform: scale(1.1); }
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.7); }
-            70% { box-shadow: 0 0 0 20px rgba(37,99,235,0); }
-            100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+            0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.7); }
+            70% { box-shadow: 0 0 0 25px rgba(59,130,246,0); }
+            100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+        }
+
+        #csvModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        #csvModal > div {
+            background: var(--card);
+            padding: 40px;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 700px;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        #csvInput {
+            width: 100%;
+            height: 300px;
+            background: rgba(10,10,20,0.8);
+            color: var(--text);
+            padding: 20px;
+            border-radius: 16px;
+            font-family: 'Courier New', monospace;
+            border: 1px solid var(--border);
+            margin: 20px 0;
         }
 
         @media (max-width: 768px) {
-            .title { font-size: 1.8em; }
-            .card { padding: 20px; }
-            button { width: 100%; margin: 8px 0; }
+            .title { font-size: 2em; }
+            .card { padding: 25px; }
+            button { width: 100%; margin: 10px 0; }
+            table { font-size: 0.9em; }
         }
     </style>
 </head>
@@ -212,8 +292,8 @@
             <h1 class="title">Analisis Efisiensi Charger HP</h1>
             <p class="subtitle">Menggunakan Turunan Numerik dSoC/dt (%/menit)</p>
             <div class="badge">PROYEK AKHIR<br>MATA KULIAH KALKULUS DIFERENSIAL</div>
-            <p style="margin-top:20px; font-size:1.1em; opacity:0.9;">
-                <strong>Kelompok 2</strong> • 2025
+            <p class="group-info">
+                <strong>Kelompok 2</strong> • Semester Genap 2024/2025
             </p>
         </header>
 
@@ -224,7 +304,7 @@
                 <tbody>
                     <tr>
                         <td><input type="number" step="0.1" min="0" value="0" required></td>
-                        <td><input type="number" min="0" max="100" value="8" required></td>
+                        <td><input type="number" min="0" max="100" value="10" required></td>
                         <td><button class="btn btn-danger">Hapus</button></td>
                     </tr>
                 </tbody>
@@ -239,34 +319,44 @@
             <div class="formula-box">
                 <p>Turunan pertama secara analitik didefinisikan sebagai:</p>
                 <div class="math">
-                    \[\frac{dSoC}{dt} = \lim_{\Delta t \to 0} \frac{SoC(t + \Delta t) - SoC(t)}{\Delta t}\]
+                    \[ \frac{d\text{SoC}}{dt} = \lim_{\Delta t \to 0} \frac{\text{SoC}(t + \Delta t) - \text{SoC}(t)}{\Delta t} \]
                 </div>
 
-                <p>Karena data diskrit → digunakan <strong>aproksimasi beda hingga</strong>:</p>
+                <p>Untuk data diskrit, gunakan aproksimasi <strong>beda hingga</strong>:</p>
 
                 <div class="math">
-                    \[\left( \frac{dSoC}{dt} \right)_0 \approx \frac{SoC_1 - SoC_0}{t_1 - t_0} \quad \text{(Forward Difference)}\]</div>
+                    \[ \left( \frac{d\text{SoC}}{dt} \right)_0 \approx \frac{\text{SoC}_1 - \text{SoC}_0}{t_1 - t_0} \quad (\text{Forward Difference}) \]
+                </div>
 
                 <div class="math">
-                    \[\left( \frac{dSoC}{dt} \right)_n \approx \frac{SoC_n - SoC_{n-1}}{t_n - t_{n-1}} \quad \text{(Backward Difference)}\]</div>
+                    \[ \left( \frac{d\text{SoC}}{dt} \right)_n \approx \frac{\text{SoC}_n - \text{SoC}_{n-1}}{t_n - t_{n-1}} \quad (\text{Backward Difference}) \]
+                </div>
 
                 <div class="math">
-                    \[\left( \frac{dSoC}{dt} \right)_i \approx \frac{SoC_{i+1} - SoC_{i-1}}{t_{i+1} - t_{i-1}} \quad \text{(Central Difference)}\]</div>
+                    \[ \left( \frac{d\text{SoC}}{dt} \right)_i \approx \frac{\text{SoC}_{i+1} - \text{SoC}_{i-1}}{t_{i+1} - t_{i-1}} \quad (\text{Central Difference, } i=1,\dots,n-1) \]
+                </div>
 
                 <p><strong>Skor Efisiensi</strong> (0–100):</p>
                 <div class="math">
-                    \[\text{Skor} = \min\left(100,\ 10 \times \overline{\left|\frac{dSoC}{dt}\right|}\right)\]
+                    \[ \text{Skor} = \min\left(100,\ 10 \times \overline{\left| \frac{d\text{SoC}}{dt} \right|} \right) \]
                 </div>
-                <small>∗ 10 %/menit dianggap sebagai charger super cepat (120 W+)</small>
+                <small>∗ 10 %/menit ≈ charger super cepat (120 W+)</small>
             </div>
 
             <h3>Langkah Perhitungan Detail</h3>
-            <div id="stepByStep" style="background:rgba(15,23,42,0.8); padding:20px; border-radius:14px; line-height:2;"></div>
+            <div id="stepByStep" style="background:rgba(10,10,20,0.8); padding:25px; border-radius:18px; line-height:2;"></div>
         </div>
 
         <div class="card">
             <h2>Hasil Perhitungan</h2>
-            <div id="calculationResults" style="text-align:center; font-size:2em; padding:30px; background:linear-gradient(135deg,#166534,#16a34a); border-radius:16px; color:white;"></div>
+            <div id="calculationResults" style="text-align:center; font-size:2.2em; padding:35px; background:linear-gradient(135deg, var(--primary), var(--accent)); border-radius:20px; color:white; box-shadow: inset 0 0 30px rgba(255,255,255,0.1);"></div>
+
+            <h3>Analisis Efisiensi</h3>
+            <div id="analysisBox" class="analysis-box" style="display:none;">
+                <div class="analysis-title" id="analysisTitle"></div>
+                <p id="analysisText"></p>
+                <small id="analysisRef">Sumber: Data rata-rata dari berbagai sumber seperti Android Police, Anker, dan PhoneArena (2025).</small>
+            </div>
         </div>
 
         <div class="card">
@@ -277,7 +367,7 @@
 
         <div class="card">
             <h2>Upload ke Leaderboard Publik</h2>
-            <input type="text" id="merkCharger" placeholder="Contoh: Samsung 45W PD Charger" style="margin:10px 0; padding:14px;">
+            <input type="text" id="merkCharger" placeholder="Contoh: Samsung 45W PD Charger" style="margin:10px 0; padding:16px;">
             <input type="text" id="hpModel" placeholder="Contoh: Samsung Galaxy S24 Ultra">
             <button class="btn btn-success" id="uploadPublic">Upload Hasil ke Leaderboard</button>
         </div>
@@ -294,24 +384,25 @@
         </div>
     </div>
 
-    <button class="floating" id="scrollTop" title="Ke atas">Up Arrow</button>
+    <button class="floating" id="scrollTop" title="Kembali ke Atas">↑</button>
 
     <!-- Modal CSV -->
-    <div id="csvModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;">
-        <div style="background:#1e293b;padding:30px;border-radius:20px;width:90%;max-width:600px;">
-            <h2 style="color:white;margin-bottom:20px;">Tempel Data CSV</h2>
-            <textarea id="csvInput" style="width:100%;height:250px;background:#0f172a;color:white;padding:15px;border-radius:12px;font-family:monospace;"></textarea>
-            <button class="btn" id="submitCSV" style="width:100%;margin-top:15px;padding:15px;">Submit CSV</button>
-            <button style="position:absolute;top:10px;right:20px;font-size:30px;background:none;border:none;color:white;cursor:pointer;" id="closeModal">×</button>
+    <div id="csvModal">
+        <div>
+            <h2 style="color:var(--accent); margin-bottom:25px;">Tempel Data CSV</h2>
+            <textarea id="csvInput" placeholder="Contoh:\n0,10\n5,35\n10,62\n15,85\n(Format: waktu,SoC per baris)"></textarea>
+            <button class="btn" id="submitCSV" style="width:100%; margin-top:20px; padding:18px;">Submit CSV</button>
+            <button style="position:absolute; top:15px; right:20px; font-size:32px; background:none; border:none; color:var(--text-secondary); cursor:pointer;" id="closeModal">×</button>
         </div>
     </div>
 
     <div class="footer">
         <p>© 2025 <strong>Kelompok 2</strong> • Mata Kuliah Kalkulus Diferensial</p>
+        <p>Dibuat dengan JavaScript, Chart.js, MathJax • Hosted Gratis di <strong>GitHub Pages</strong></p>
     </div>
 
     <script>
-        // === Semua JavaScript ===
+        // === JavaScript Utama ===
         const tbody = document.querySelector('#dataTable tbody');
         const addRow = document.getElementById('addRow');
         const reset = document.getElementById('resetTable');
@@ -322,12 +413,17 @@
         const csvInput = document.getElementById('csvInput');
         const stepByStep = document.getElementById('stepByStep');
         const results = document.getElementById('calculationResults');
+        const analysisBox = document.getElementById('analysisBox');
+        const analysisTitle = document.getElementById('analysisTitle');
+        const analysisText = document.getElementById('analysisText');
+        const analysisRef = document.getElementById('analysisRef');
         const uploadBtn = document.getElementById('uploadPublic');
         const merk = document.getElementById('merkCharger');
         const hp = document.getElementById('hpModel');
         const feed = document.getElementById('publicFeed');
 
         let chartSoc, chartRate;
+        let avgRateGlobal; // Untuk akses global
 
         // Tambah baris
         addRow.onclick = () => {
@@ -337,12 +433,19 @@
                             <td><button class="btn btn-danger">Hapus</button></td>`;
             tbody.appendChild(tr);
             tr.querySelector('.btn-danger').onclick = () => { tr.remove(); calc(); };
+            attachDeleteListeners();
         };
 
-        // Hapus baris
-        document.querySelectorAll('.btn-danger').forEach(btn => {
-            btn.onclick = () => { btn.closest('tr').remove(); calc(); };
-        });
+        // Attach delete listeners
+        function attachDeleteListeners() {
+            document.querySelectorAll('.btn-danger').forEach(btn => {
+                if (!btn.hasAttribute('data-attached')) {
+                    btn.setAttribute('data-attached', 'true');
+                    btn.onclick = () => { btn.closest('tr').remove(); calc(); };
+                }
+            });
+        }
+        attachDeleteListeners();
 
         reset.onclick = () => location.reload();
         paste.onclick = () => modal.style.display = 'flex';
@@ -350,16 +453,16 @@
         submitCSV.onclick = () => {
             tbody.innerHTML = '';
             csvInput.value.trim().split('\n').forEach(line => {
-                const [t, soc] = line.split(',').map(x => parseFloat(x));
-                if (!isNaN(t) && !isNaN(soc)) {
+                const parts = line.split(',').map(x => parseFloat(x.trim()));
+                if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td><input type="number" step="0.1" value="${t}"></td>
-                                    <td><input type="number" value="${soc}"></td>
+                    tr.innerHTML = `<td><input type="number" step="0.1" value="${parts[0]}"></td>
+                                    <td><input type="number" value="${parts[1]}" min="0" max="100"></td>
                                     <td><button class="btn btn-danger">Hapus</button></td>`;
                     tbody.appendChild(tr);
-                    tr.querySelector('.btn-danger').onclick = () => { tr.remove(); calc(); };
                 }
             });
+            attachDeleteListeners();
             modal.style.display = 'none';
             calc();
         };
@@ -370,16 +473,19 @@
                 const inputs = row.querySelectorAll('input');
                 const t = parseFloat(inputs[0].value);
                 const soc = parseFloat(inputs[1].value);
-                if (!isNaN(t) && !isNaN(soc)) data.push({t, soc});
+                if (!isNaN(t) && !isNaN(soc) && soc >= 0 && soc <= 100) {
+                    data.push({ t, soc });
+                }
             });
-            return data.sort((a,b) => a.t - b.t);
+            return data.sort((a, b) => a.t - b.t);
         }
 
         function calc() {
             const data = getData();
             if (data.length < 2) {
-                results.innerHTML = 'Masukkan minimal 2 titik data!';
+                results.innerHTML = '<p style="font-size:1.2em; color: var(--text-secondary);">Masukkan minimal 2 titik data untuk perhitungan.</p>';
                 stepByStep.innerHTML = '';
+                analysisBox.style.display = 'none';
                 return;
             }
 
@@ -389,61 +495,124 @@
             for (let i = 0; i < data.length; i++) {
                 let rate, formula;
                 if (i === 0) {
+                    // Forward
                     rate = (data[1].soc - data[0].soc) / (data[1].t - data[0].t);
-                    formula = `\\text{Forward} \\quad \\dfrac{${data[1].soc} - ${data[0].soc}}{${data[1].t} - ${data[0].t}} = ${rate.toFixed(4)}`;
+                    formula = `Forward Difference (titik ${i}): \\\\ \\frac{\\text{SoC}_{${i+1}} - \\text{SoC}_${i}}{t_{${i+1}} - t_${i}} = \\frac{${data[1].soc} - ${data[0].soc}}{${data[1].t} - ${data[0].t}} = ${rate.toFixed(4)}\\%/\\text{menit}`;
                 } else if (i === data.length - 1) {
-                    rate = (data[i].soc - data[i-1].soc) / (data[i].t - data[i-1].t);
-                    formula = `\\text{Backward} \\quad \\dfrac{${data[i].soc} - ${data[i-1].soc}}{${data[i].t} - ${data[i-1].t}} = ${rate.toFixed(4)}`;
+                    // Backward
+                    rate = (data[i].soc - data[i - 1].soc) / (data[i].t - data[i - 1].t);
+                    formula = `Backward Difference (titik ${i}): \\\\ \\frac{\\text{SoC}_${i} - \\text{SoC}_{${i-1}}}{t_${i} - t_{${i-1}}} = \\frac{${data[i].soc} - ${data[i-1].soc}}{${data[i].t} - ${data[i-1].t}} = ${rate.toFixed(4)}\\%/\\text{menit}`;
                 } else {
-                    rate = (data[i+1].soc - data[i-1].soc) / (data[i+1].t - data[i-1].t);
-                    formula = `\\text{Central} \\quad \\dfrac{${data[i+1].soc} - ${data[i-1].soc}}{${data[i+1].t} - ${data[i-1].t}} = ${rate.toFixed(4)}`;
+                    // Central
+                    rate = (data[i + 1].soc - data[i - 1].soc) / (data[i + 1].t - data[i - 1].t);
+                    formula = `Central Difference (titik ${i}): \\\\ \\frac{\\text{SoC}_{${i+1}} - \\text{SoC}_{${i-1}}}{t_{${i+1}} - t_{${i-1}}} = \\frac{${data[i+1].soc} - ${data[i-1].soc}}{${data[i+1].t} - ${data[i-1].t}} = ${rate.toFixed(4)}\\%/\\text{menit}`;
                 }
                 rates.push(rate);
                 steps.push(formula);
             }
 
-            const avgRate = rates.reduce((a,b)=>a+b,0)/rates.length;
-            const skor = Math.min(100, avgRate * 10).toFixed(1);
+            avgRateGlobal = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const skor = Math.min(100, Math.abs(avgRateGlobal) * 10).toFixed(1);
 
             results.innerHTML = `
-                <div style="font-size:2.5em; margin:10px 0;">${avgRate.toFixed(3)} %/menit</div>
-                <div style="font-size:1.4em;">Skor Efisiensi: <strong style="color:#60a5fa;">${skor}/100</strong></div>
+                <div style="font-size:2.5em; margin:15px 0; font-weight:800;">${avgRateGlobal.toFixed(3)} %/menit</div>
+                <div style="font-size:1.5em; opacity:0.9;">Skor Efisiensi: <strong style="color:#fbbf24;">${skor}/100</strong></div>
             `;
 
-            stepByStep.innerHTML = '<ol start="1" style="font-size:1.1em;">' + 
-                steps.map(s => `<li>${s}</li>`).join('') + '</ol>';
+            stepByStep.innerHTML = `<ol style="font-size:1.1em; color:var(--text-secondary);">${steps.map(s => `<li style="margin-bottom:15px;">$${s}$</li>`).join('')}</ol>`;
             MathJax.typesetPromise();
 
+            // Analisis
+            updateAnalysis(avgRateGlobal);
+
             // Grafik
-            const labels = data.map(d => d.t);
+            const labels = data.map(d => d.t.toFixed(1));
             if (chartSoc) chartSoc.destroy();
             if (chartRate) chartRate.destroy();
 
             chartSoc = new Chart(document.getElementById('socChart'), {
                 type: 'line',
-                data: { labels, datasets: [{ label: 'SoC (%)', data: data.map(d=>d.soc), borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.2)', tension: 0.4, fill: true }] },
-                options: { responsive: true, plugins: { title: { display: true, text: 'State of Charge vs Waktu', color: 'white' } }, scales: { x: { title: { display: true, text: 'Waktu (menit)' } } } }
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'SoC (%)',
+                        data: data.map(d => d.soc),
+                        borderColor: var(--accent),
+                        backgroundColor: 'rgba(59,130,246,0.2)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { title: { display: true, text: 'State of Charge vs Waktu', color: var(--text) } },
+                    scales: { x: { title: { display: true, text: 'Waktu (menit)', color: var(--text-secondary) }, y: { title: { display: true, text: 'SoC (%)', color: var(--text-secondary) } } },
+                    elements: { point: { radius: 5 } }
+                }
             });
 
             chartRate = new Chart(document.getElementById('dsocdtChart'), {
                 type: 'line',
-                data: { labels, datasets: [{ label: 'dSoC/dt (%/menit)', data: rates, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.3)', tension: 0.4, fill: true }] },
-                options: { responsive: true, plugins: { title: { display: true, text: 'Laju Pengisian vs Waktu', color: 'white' } } }
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'dSoC/dt (%/menit)',
+                        data: rates,
+                        borderColor: var(--warning),
+                        backgroundColor: 'rgba(245,158,11,0.2)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { title: { display: true, text: 'Laju Pengisian vs Waktu', color: var(--text) } },
+                    scales: { x: { title: { display: true, text: 'Waktu (menit)', color: var(--text-secondary) }, y: { title: { display: true, text: 'dSoC/dt (%/menit)', color: var(--text-secondary) } } }
+                }
             });
+        }
+
+        function updateAnalysis(avg) {
+            const absAvg = Math.abs(avg);
+            analysisBox.style.display = 'block';
+            let title, text, className;
+            if (absAvg > 3) {
+                className = 'success';
+                title = 'Sangat Efektif! 🚀';
+                text = `Charger ini sangat cepat (${absAvg.toFixed(3)} %/menit). Setara dengan fast charging 100W+ (misalnya Xiaomi HyperCharge), yang bisa isi 50% dalam <20 menit. Ideal untuk pengguna berat.`;
+            } else if (absAvg >= 1.5) {
+                className = 'success';
+                title = 'Efektif dan Normal ✅';
+                text = `Kecepatan pengisian ${absAvg.toFixed(3)} %/menit termasuk baik untuk charger standar 20-30W (seperti iPhone/Samsung), isi 0-50% dalam 30 menit. Cocok untuk penggunaan harian.`;
+            } else if (absAvg >= 0.5) {
+                className = 'warning';
+                title = 'Kurang Efektif ⚠️';
+                text = `Dengan ${absAvg.toFixed(3)} %/menit, charger ini lambat (seperti charger lama 5-10W), butuh >2 jam untuk full charge. Saran: Upgrade ke fast charger untuk efisiensi lebih baik.`;
+            } else {
+                className = 'danger';
+                title = 'Sangat Lambat! ❌';
+                text = `Nilai ${absAvg.toFixed(3)} %/menit menunjukkan masalah (kabel rusak? Charger tidak kompatibel?). Normalnya minimal 0.5-1 %/menit bahkan untuk charger dasar. Periksa koneksi.`;
+            }
+            analysisBox.className = `analysis-box ${className}`;
+            analysisTitle.textContent = title;
+            analysisTitle.className = className;
+            analysisText.textContent = text;
         }
 
         // Ekspor
         document.getElementById('exportCSV').onclick = () => {
-            let csv = "Waktu (menit),SoC (%)\n" + getData().map(d => `${d.t},${d.soc}`).join("\n");
+            const data = getData();
+            let csv = "Waktu (menit),SoC (%)\n" + data.map(d => `${d.t},${d.soc}`).join("\n");
             download(csv, "data_charger_kelompok2.csv", "text/csv");
         };
         document.getElementById('exportHTML').onclick = () => {
             const data = getData();
-            const avg = (rates.reduce((a,b)=>a+b,0)/rates.length || 0).toFixed(3);
-            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Laporan Kelompok 2</title><style>body{font-family:sans-serif;padding:40px;background:#0b1120;color:white;}</style></head><body>
+            const avg = avgRateGlobal ? avgRateGlobal.toFixed(3) : 0;
+            const skor = Math.min(100, Math.abs(avgRateGlobal || 0) * 10).toFixed(1);
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Laporan Kelompok 2</title><style>body{font-family:sans-serif;padding:40px;background:#000;color:#fff;}</style></head><body>
                 <h1>Laporan Analisis Charger – Kelompok 2</h1>
                 <p>Rata-rata dSoC/dt: ${avg} %/menit | Skor: ${skor}/100</p>
-                <table border="1" style="width:100%;border-collapse:collapse;"><tr><th>Waktu</th><th>SoC</th></tr>${data.map(d=>`<tr><td>${d.t}</td><td>${d.soc}</td></tr>`).join('')}</table>
+                <table border="1" style="width:100%;border-collapse:collapse;color:#000;"><tr><th>Waktu</th><th>SoC</th></tr>${data.map(d=>`<tr><td>${d.t}</td><td>${d.soc}</td></tr>`).join('')}</table>
                 <p>Generated: ${new Date().toLocaleString('id-ID')}</p></body></html>`;
             download(html, "laporan_kelompok2.html", "text/html");
         };
@@ -458,28 +627,33 @@
         uploadBtn.onclick = () => {
             calc();
             if (!merk.value || !hp.value) return alert("Isi merk charger & model HP!");
-            const entry = { merk: merk.value, hp: hp.value, avg: avgRate.toFixed(3), skor, skor, time: new Date().toLocaleString('id-ID') };
-            let list = JSON.parse(localStorage.getItem('kelompok2_leaderboard')||'[]');
+            const skor = Math.min(100, Math.abs(avgRateGlobal) * 10).toFixed(1);
+            const entry = { merk: merk.value, hp: hp.value, avg: avgRateGlobal.toFixed(3), skor, time: new Date().toLocaleString('id-ID') };
+            let list = JSON.parse(localStorage.getItem('kelompok2_leaderboard') || '[]');
             list.unshift(entry);
-            localStorage.setItem('kelompok2_leaderboard', JSON.stringify(list));
+            localStorage.setItem('kelompok2_leaderboard', JSON.stringify(list.slice(0, 50))); // Limit 50 entries
             loadLeaderboard();
             alert("Berhasil diupload ke leaderboard!");
+            merk.value = ''; hp.value = '';
         };
         function loadLeaderboard() {
-            const list = JSON.parse(localStorage.getItem('kelompok2_leaderboard')||'[]');
-            feed.innerHTML = list.length ? `
-                <table style="width:100%;text-align:left;">
-                    <tr style="background:#2563eb;color:white;"><th>Charger</th><th>HP</th><th>dSoC/dt</th><th>Skor</th><th>Waktu</th></tr>
-                    ${list.map(e=>`<tr><td>${e.merk}</td><td>${e.hp}</td><td>${e.avg}</td><td><strong>${e.skor}</strong></td><td>${e.time}</td></tr>`).join('')}
-                </table>` : '<p style="text-align:center;color:#94a3b8;">Belum ada data</p>';
+            const list = JSON.parse(localStorage.getItem('kelompok2_leaderboard') || '[]');
+            if (list.length === 0) {
+                feed.innerHTML = '<p style="text-align:center; color:var(--text-secondary);">Belum ada data publik. Upload hasil Anda!</p>';
+                return;
+            }
+            feed.innerHTML = `
+                <table>
+                    <thead><tr style="background:linear-gradient(135deg, var(--primary), var(--accent)); color:white;"><th>Charger</th><th>HP</th><th>dSoC/dt</th><th>Skor</th><th>Waktu</th></tr></thead>
+                    <tbody>${list.map(e => `<tr><td>${e.merk}</td><td>${e.hp}</td><td>${e.avg}</td><td><strong style="color:var(--success);">${e.skor}</strong></td><td style="font-size:0.9em;">${e.time}</td></tr>`).join('')}</tbody>
+                </table>`;
         }
         loadLeaderboard();
 
-        document.getElementById('scrollTop').onclick = () => window.scrollTo({top:0, behavior:'smooth'});
+        document.getElementById('scrollTop').onclick = () => window.scrollTo({top: 0, behavior: 'smooth'});
 
         tbody.addEventListener('input', calc);
-        calc();
+        calc(); // Init
     </script>
 </body>
 </html>
-
