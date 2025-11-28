@@ -3,465 +3,422 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analisis Efisiensi Charger HP Menggunakan Turunan (dSoC/dt)</title>
+    <title>Analisis Efisiensi Charger HP • dSoC/dt</title>
+    <meta name="description" content="Mini Riset Kalkulus: Analisis kecepatan charger menggunakan turunan numerik dSoC/dt">
 
-    <!-- Chart.js -->
+    <!-- Chart.js & MathJax -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- MathJax untuk rumus LaTeX -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <style>
         :root {
-            --primary: #007bff;
-            --light: #f8fbff;
-            --border: #dee2e6;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --primary: #3b82f6;
+            --accent: #60a5fa;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #10b981;
         }
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-            color: #333;
-            margin: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text);
+            min-height: 100vh;
             padding: 20px;
-            line-height: 1.6;
         }
         header {
             text-align: center;
+            padding: 30px 0;
+            background: linear-gradient(90deg, #1e40af, #3b82f6);
+            border-radius: 20px;
             margin-bottom: 30px;
-            color: #003087;
+            box-shadow: 0 10px 30px rgba(59,130,246,0.4);
+            color: white;
         }
-        h1 { font-size: 1.8em; margin: 0; }
-        h2 { color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 8px; }
-        .card {
+        .logo {
+            width: 80px;
+            height: 80px;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: #3b82f6;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+        h1 { font-size: 2em; margin: 10px 0; }
+        .subtitle { font-size: 1.1em; opacity: 0.9; }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        .card {
+            background: var(--card);
+            border-radius: 16px;
             padding: 25px;
             margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59,130,246,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
         }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(59,130,246,0.3); }
+
+        h2 {
+            color: var(--accent);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 15px 0;
-        }
-        th, td {
-            border: 1px solid var(--border);
-            padding: 10px;
-            text-align: center;
+            background: rgba(15,23,42,0.6);
+            border-radius: 12px;
+            overflow: hidden;
         }
         th {
-            background-color: var(--light);
-            color: var(--primary);
-        }
-        input[type="number"], input[type="text"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
             background: var(--primary);
             color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        td { padding: 12px; text-align: center; border-bottom: 1px solid #334155; }
+        input {
+            width: 100%;
+            padding: 10px;
             border: none;
-            padding: 10px 16px;
-            margin: 5px;
-            border-radius: 6px;
+            background: #1e293b;
+            color: white;
+            border-radius: 8px;
+        }
+        input:focus { outline: 2px solid var(--accent); }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 0.95em;
+            font-weight: bold;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
         }
-        button:hover { background: #0056b3; }
-        .deleteRow {
-            background: #dc3545;
+        .btn-primary {
+            background: var(--primary);
+            color: white;
         }
-        .deleteRow:hover { background: #c82333; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        button:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
 
         .formula-box {
-            background: #f0f8ff;
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 6px solid var(--primary);
+            background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(96,165,250,0.1));
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--accent);
             margin: 20px 0;
         }
         .math {
-            background: #e3f2fd;
-            padding: 15px;
-            border-radius: 8px;
+            background: rgba(15,23,42,0.8);
+            padding: 18px;
+            border-radius: 12px;
             margin: 15px 0;
+            font-size: 1.2em;
             text-align: center;
-            font-size: 1.15em;
-            overflow-x: auto;
+            border-left: 5px solid var(--accent);
         }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0; top: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-        }
-        .modal-content {
-            background: white;
-            margin: 10% auto;
-            padding: 25px;
-            width: 90%;
-            max-width: 600px;
-            border-radius: 10px;
-        }
-        .close {
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+
         canvas {
-            margin: 20px 0;
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            background: var(--card);
+            padding: 15px;
+            box-shadow: inset 0 4px 15px rgba(0,0,0,0.3);
         }
+
+        .floating-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-size: 28px;
+            box-shadow: 0 8px 25px rgba(59,130,246,0.6);
+            z-index: 1000;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(59,130,246,0); }
+            100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            font-size: 0.9em;
+            margin-top: 50px;
+        }
+
         @media (max-width: 768px) {
-            .card { padding: 15px; }
-            button { width: 100%; margin: 8px 0; }
+            .card { padding: 18px; }
+            button { width:100%; margin:8px 0; }
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <header>
+            <div class="logo">Battery</div>
+            <h1>Analisis Efisiensi Charger HP</h1>
+            <p class="subtitle">Menggunakan Turunan Numerik dSoC/dt (%/menit)</p>
+        </header>
 
-    <header>
-        <h1>Analisis Efisiensi Charger HP Menggunakan Turunan<br><small>dSoC/dt (%/menit)</small></h1>
-        <p>Mini Riset – Kalkulus Diferensial Numerik</p>
-    </header>
-
-    <main>
-        <!-- Input Data -->
-        <section class="card">
-            <h2>1. Input Data Percobaan</h2>
+        <div class="card">
+            <h2>Input Data Percobaan</h2>
             <table id="dataTable">
-                <thead>
-                    <tr><th>Waktu (menit)</th><th>SoC (%)</th><th>Aksi</th></tr>
-                </thead>
+                <thead><tr><th>Waktu (menit)</th><th>SoC (%)</th><th>Aksi</th></tr></thead>
                 <tbody>
                     <tr>
                         <td><input type="number" step="0.1" min="0" value="0" required></td>
-                        <td><input type="number" min="0" max="100" value="10" required></td>
-                        <td><button class="deleteRow">Hapus</button></td>
+                        <td><input type="number" min="0" max="100" value="5" required></td>
+                        <td><button class="btn-danger">Hapus</button></td>
                     </tr>
                 </tbody>
             </table>
-            <button id="addRow">Tambah Baris</button>
-            <button id="resetTable">Reset Tabel</button>
-            <button id="pasteCSV">Tempel dari CSV</button>
-        </section>
+            <button class="btn-primary" id="addRow">+ Tambah Baris</button>
+            <button class="btn-primary" id="resetTable">Reset</button>
+            <button class="btn-primary" id="pasteCSV">Tempel CSV</button>
+        </div>
 
-        <!-- Rumus & Penjelasan -->
-        <section class="card">
-            <h2>2. Rumus dan Penjelasan Turunan Numerik (dSoC/dt)</h2>
+        <div class="card">
+            <h2>Teori & Rumus Turunan Numerik</h2>
             <div class="formula-box">
-                <h3>Konsep Dasar</h3>
-                <p>
-                    Laju pengisian baterai didefinisikan sebagai turunan pertama State of Charge (SoC) terhadap waktu:
-                </p>
-                <div class="math">
-                    \[\frac{dSoC}{dt} = \lim_{\Delta t \to 0} \frac{\Delta SoC}{\Delta t}\]
-                </div>
-
-                <h3>Metode Beda Hingga (Finite Difference)</h3>
-                <p><strong>1. Forward Difference</strong> (titik pertama)</p>
-                <div class="math">\[\left(\frac{dSoC}{dt}\right)_0 \approx \frac{SoC_1 - SoC_0}{t_1 - t_0}\]</div>
-
-                <p><strong>2. Backward Difference</strong> (titik terakhir)</p>
-                <div class="math">\[\left(\frac{dSoC}{dt}\right)_n \approx \frac{SoC_n - SoC_{n-1}}{t_n - t_{n-1}}\]</div>
-
-                <p><strong>3. Central Difference</strong> (titik tengah – paling akurat)</p>
-                <div class="math">\[\left(\frac{dSoC}{dt}\right)_i \approx \frac{SoC_{i+1} - SoC_{i-1}}{t_{i+1} - t_{i-1}}\]</div>
-
-                <h3>Skor Efisiensi (0–100)</h3>
-                <div class="math">
-                    \[\text{Skor Efisiensi} = \min\left(100,\ 10 \times \overline{\frac{dSoC}{dt}}\right)\]
-                </div>
-                <p>Keterangan: 10 %/menit ≈ charger super cepat (100 W+). Skor maksimal = 100.</p>
+                <div class="math">\[\frac{dSoC}{dt} = \lim_{\Delta t \to 0} \frac{\Delta SoC}{\Delta t}\]</div>
+                <p><strong>Forward Difference</strong> (titik awal):</p>
+                <div class="math">\[\frac{dSoC}{dt}\bigg|_0 \approx \frac{SoC_1 - SoC_0}{t_1 - t_0}\]</div>
+                <p><strong>Backward Difference</strong> (titik akhir):</p>
+                <div class="math">\[\frac{dSoC}{dt}\bigg|_n \approx \frac{SoC_n - SoC_{n-1}}{t_n - t_{n-1}}\]</div>
+                <p><strong>Central Difference</strong> (titik tengah – paling akurat):</p>
+                <div class="math">\[\frac{dSoC}{dt}\bigg|_i \approx \frac{SoC_{i+1} - SoC_{i-1}}{t_{i+1} - t_{i-1}\]</div>
+                <p><strong>Skor Efisiensi</strong>:</p>
+                <div class="math">\[\text{Skor} = \min(100,\ 10 \times \overline{\frac{dSoC}{dt}})\]</div>
             </div>
-
             <h3>Langkah Perhitungan Detail</h3>
-            <div id="stepByStep" style="background:#f9f9f9; padding:15px; border-radius:8px;"></div>
-        </section>
+            <div id="stepByStep" style="background:#1e293b;padding:20px;border-radius:12px;"></div>
+        </div>
 
-        <!-- Hasil Perhitungan -->
-        <section class="card">
-            <h2>3. Hasil Perhitungan</h2>
-            <div id="calculationResults"></div>
-        </section>
+        <div class="card">
+            <h2>Hasil Perhitungan</h2>
+            <div id="calculationResults" style="font-size:1.3em; text-align:center; padding:20px; background:rgba(16,185,129,0.2); border-radius:12px;"></div>
+        </div>
 
-        <!-- Grafik -->
-        <section class="card">
-            <h2>4. Visualisasi Grafik</h2>
+        <div class="card">
+            <h2>Grafik Interaktif</h2>
             <canvas id="socChart"></canvas>
             <canvas id="dsocdtChart"></canvas>
-        </section>
+        </div>
 
-        <!-- Upload Publik -->
-        <section class="card">
-            <h2>5. Upload Data Publik (localStorage)</h2>
-            <label>Merk Charger: <input type="text" id="merkCharger" placeholder="contoh: Anker PowerPort 65W"></label><br><br>
-            <label>Model HP: <input type="text" id="hpModel" placeholder="contoh: Samsung Galaxy S23 Ultra"></label><br><br>
-            <button id="uploadPublic">Upload Data Publik</button>
-        </section>
+        <div class="card">
+            <h2>Upload ke Feed Publik</h2>
+            <input type="text" id="merkCharger" placeholder="Contoh: Xiaomi 120W Turbo Charger" style="margin:10px 0;">
+            <input type="text" id="hpModel" placeholder="Contoh: Xiaomi 14 Pro">
+            <button class="btn-success" id="uploadPublic" style="width:100%;padding:15px;font-size:1.1em;">Upload ke Leaderboard Publik</button>
+        </div>
 
-        <!-- Feed Publik -->
-        <section class="card">
-            <h2>6. Feed Publik</h2>
+        <div class="card">
+            <h2>Leaderboard Publik</h2>
             <div id="publicFeed"></div>
-        </section>
+        </div>
 
-        <!-- Ekspor -->
-        <section class="card">
-            <h2>7. Ekspor Data</h2>
-            <button id="exportCSV">Download CSV</button>
-            <button id="exportHTML">Download Laporan HTML</button>
-        </section>
-    </main>
-
-    <!-- Modal CSV -->
-    <div id="csvModal" class="modal">
-        <div class="modal-content">
-            <span class="close">×</span>
-            <h3>Tempel CSV (format: waktu,SoC per baris)</h3>
-            <textarea id="csvInput" placeholder="0,10&#10;5,35&#10;10,62&#10;15,85"></textarea><br><br>
-            <button id="submitCSV">Submit</button>
+        <div class="card">
+            <h2>Ekspor</h2>
+            <button class="btn-primary" id="exportCSV" style="width:48%;">Download CSV</button>
+            <button class="btn-primary" id="exportHTML" style="width:48%;">Download Laporan HTML</button>
         </div>
     </div>
 
+    <!-- Floating Button -->
+    <button class="floating-btn" id="scrollTop" title="Ke atas">Up Arrow</button>
+
+    <!-- Modal CSV -->
+    <div id="csvModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;">
+        <div style="background:#1e293b;padding:30px;border-radius:16px;width:90%;max-width:600px;">
+            <h2 style="color:white;margin-bottom:20px;">Tempel CSV</h2>
+            <textarea id="csvInput" style="width:100%;height:200px;background:#0f172a;color:white;padding:15px;border-radius:10px;"></textarea>
+            <button class="btn-primary" id="submitCSV" style="width:100%;margin-top:15px;padding:15px;">Submit</button>
+            <button style="position:absolute;top:10px;right:15px;font-size:24px;background:none;border:none;color:white;" id="closeModal">×</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>Mini Riset Kalkulus Diferensial • 2025 | Dibuat dengan ❤️ & JavaScript Murni</p>
+        <p>Hosted Gratis di <strong>GitHub Pages</strong></p>
+    </footer>
+
     <script>
-        // === Semua JavaScript di sini ===
         const dataTable = document.querySelector('#dataTable tbody');
-        const addRowBtn = document.getElementById('addRow');
-        const resetTableBtn = document.getElementById('resetTable');
-        const pasteCSVBtn = document.getElementById('pasteCSV');
-        const csvModal = document.getElementById('csvModal');
-        const closeModal = document.querySelector('.close');
+        const addRow = document.getElementById('addRow');
+        const resetTable = document.getElementById('resetTable');
+        const pasteCSV = document.getElementById('pasteCSV');
+        const modal = document.getElementById('csvModal');
+        const closeModal = document.getElementById('closeModal');
         const submitCSV = document.getElementById('submitCSV');
         const csvInput = document.getElementById('csvInput');
         const stepByStep = document.getElementById('stepByStep');
-        const calculationResults = document.getElementById('calculationResults');
-        const uploadPublicBtn = document.getElementById('uploadPublic');
-        const merkCharger = document.getElementById('merkCharger');
-        const hpModel = document.getElementById('hpModel');
-        const publicFeed = document.getElementById('publicFeed');
+        const results = document.getElementById('calculationResults');
+        const uploadBtn = document.getElementById('uploadPublic');
+        const merk = document.getElementById('merkCharger');
+        const hp = document.getElementById('hpModel');
+        const feed = document.getElementById('publicFeed');
 
-        let socChart = null, dsocdtChart = null;
+        let chart1, chart2;
 
-        // Tambah baris
-        addRowBtn.onclick = () => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><input type="number" step="0.1" min="0" required></td>
-                <td><input type="number" min="0" max="100" required></td>
-                <td><button class="deleteRow">Hapus</button></td>
-            `;
-            dataTable.appendChild(row);
-            attachDelete();
-            row.querySelector('input').focus();
+        // Tambah & Hapus Baris
+        addRow.onclick = () => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td><input type="number" step="0.1" min="0"></td>
+                            <td><input type="number" min="0" max="100"></td>
+                            <td><button class="btn-danger">Hapus</button></td>`;
+            dataTable.appendChild(tr);
+            tr.querySelectorAll('button')[0].onclick = () => { tr.remove(); calc(); };
         };
 
-        // Hapus baris
-        function attachDelete() {
-            document.querySelectorAll('.deleteRow').forEach(btn => {
-                btn.onclick = () => {
-                    btn.closest('tr').remove();
-                    calculate();
-                };
-            });
-        }
-        attachDelete();
+        document.querySelectorAll('.btn-danger').forEach(b => {
+            b.onclick = () => { b.closest('tr').remove(); calc(); };
+        });
 
-        // Reset tabel
-        resetTableBtn.onclick = () => {
-            dataTable.innerHTML = `<tr>
-                <td><input type="number" step="0.1" min="0" value="0" required></td>
-                <td><input type="number" min="0" max="100" value="10" required></td>
-                <td><button class="deleteRow">Hapus</button></td>
-            </tr>`;
-            attachDelete();
-            calculate();
-        };
+        resetTable.onclick = () => location.reload();
 
-        // Modal CSV
-        pasteCSVBtn.onclick = () => csvModal.style.display = 'block';
-        closeModal.onclick = () => csvModal.style.display = 'none';
-        window.onclick = e => { if (e.target === csvModal) csvModal.style.display = 'none'; };
-
+        // CSV Modal
+        pasteCSV.onclick = () => modal.style.display = 'flex';
+        closeModal.onclick = closeModal.onclick = () => modal.style.display = 'none';
         submitCSV.onclick = () => {
-            const lines = csvInput.value.trim().split('\n');
             dataTable.innerHTML = '';
-            lines.forEach(line => {
-                const [t, soc] = line.split(',').map(s => parseFloat(s.trim()));
+            csvInput.value.trim().split('\n').forEach(line => {
+                const [t, soc] = line.split(',').map(Number);
                 if (!isNaN(t) && !isNaN(soc)) {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><input type="number" step="0.1" value="${t}" required></td>
-                        <td><input type="number" value="${soc}" required></td>
-                        <td><button class="deleteRow">Hapus</button></td>
-                    `;
-                    dataTable.appendChild(row);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td><input type="number" step="0.1" value="${t}"></td>
+                                    <td><input type="number" value="${soc}"></td>
+                                    <td><button class="btn-danger">Hapus</button></td>`;
+                    dataTable.appendChild(tr);
+                    tr.querySelector('button').onclick = () => { tr.remove(); calc(); };
                 }
             });
-            attachDelete();
-            csvModal.style.display = 'none';
-            calculate();
+            modal.style.display = 'none';
+            calc();
         };
 
-        // Ambil data dari tabel
         function getData() {
-            const rows = dataTable.querySelectorAll('tr');
             const data = [];
-            rows.forEach(row => {
+            dataTable.querySelectorAll('tr').forEach(row => {
                 const inputs = row.querySelectorAll('input');
                 const t = parseFloat(inputs[0].value);
                 const soc = parseFloat(inputs[1].value);
                 if (!isNaN(t) && !isNaN(soc)) data.push({t, soc});
             });
-            data.sort((a,b) => a.t - b.t);
-            return data;
+            return data.sort((a,b)=>a.t-b.t);
         }
 
-        // Hitung turunan & update semua
-        function calculate() {
+        function calc() {
             const data = getData();
-            if (data.length < 2) {
-                calculationResults.innerHTML = '<p style="color:red;">Masukkan minimal 2 titik data.</p>';
-                stepByStep.innerHTML = '';
-                if (socChart) socChart.destroy();
-                if (dsocdtChart) dsocdtChart.destroy();
-                return;
-            }
+            if (data.length < 2) { results.innerHTML = "Masukkan minimal 2 titik!"; return; }
 
-            const dsocdt = [];
+            const rates = [];
             const steps = [];
 
             for (let i = 0; i < data.length; i++) {
-                let val, tex;
+                let rate, tex;
                 if (i === 0) {
-                    // Forward
-                    val = (data[1].soc - data[0].soc) / (data[1].t - data[0].t);
-                    tex = `Forward (i=0): \\frac{${data[1].soc} - ${data[0].soc}}{${data[1].t} - ${data[0].t}} = ${val.toFixed(4)}`;
+                    rate = (data[1].soc - data[0].soc)/(data[1].t - data[0].t);
+                    tex = `Forward: \\frac{${data[1].soc} - ${data[0].soc}}{${data[1].t} - ${data[0].t}} = ${rate.toFixed(3)}`;
                 } else if (i === data.length-1) {
-                    // Backward
-                    val = (data[i].soc - data[i-1].soc) / (data[i].t - data[i-1].t);
-                    tex = `Backward (i=${i}): \\frac{${data[i].soc} - ${data[i-1].soc}}{${data[i].t} - ${data[i-1].t}} = ${val.toFixed(4)}`;
+                    rate = (data[i].soc - data[i-1].soc)/(data[i].t - data[i-1].t);
+                    tex = `Backward: \\frac{${data[i].soc} - ${data[i-1].soc}}{${data[i].t} - ${data[i-1].t}} = ${rate.toFixed(3)}`;
                 } else {
-                    // Central
-                    val = (data[i+1].soc - data[i-1].soc) / (data[i+1].t - data[i-1].t);
-                    tex = `Central (i=${i}): \\frac{${data[i+1].soc} - ${data[i-1].soc}}{${data[i+1].t} - ${data[i-1].t}} = ${val.toFixed(4)}`;
+                    rate = (data[i+1].soc - data[i-1].soc)/(data[i+1].t - data[i-1].t);
+                    tex = `Central: \\frac{${data[i+1].soc} - ${data[i-1].soc}}{${data[i+1].t} - ${data[i-1].t}} = ${rate.toFixed(3)}`;
                 }
-                dsocdt.push(val);
+                rates.push(rate);
                 steps.push(tex);
             }
 
-            const avg = dsocdt.reduce((a,b) => a+b, 0) / dsocdt.length;
-            const skor = Math.min(100, avg * 10).toFixed(2);
+            const avg = rates.reduce((a,b)=>a+b,0)/rates.length;
+            skor = Math.min(100, avg*10).toFixed(1);
 
-            // Hasil
-            calculationResults.innerHTML = `
-                <p><strong>Rata-rata dSoC/dt:</strong> ${avg.toFixed(4)} %/menit</p>
-                <p><strong>Skor Efisiensi:</strong> ${skor}/100</p>
-            `;
+            results.innerHTML = `<strong style="color:#10b981;font-size:2em;">${avg.toFixed(3)} %/menit</strong><br>
+                                 <span style="font-size:1.4em;color:#60a5fa;">Skor Efisiensi: ${skor}/100 span>`;
 
-            // Langkah detail
-            stepByStep.innerHTML = '<ul>' + steps.map(s => `<li>${s}</li>`).join('') + '</ul>';
-            MathJax.typesetPromise([stepByStep]);
+            stepByStep.innerHTML = '<ol style="line-height:2;">' + steps.map(s=>`<li>${s}</li>`).join('') + '</ol>';
+            MathJax.typesetPromise();
 
             // Grafik
-            const labels = data.map(d => d.t);
-            if (socChart) socChart.destroy();
-            socChart = new Chart(document.getElementById('socChart'), {
-                type: 'line',
-                data: { labels, datasets: [{ label: 'SoC (%)', data: data.map(d => d.soc), borderColor: '#007bff', tension: 0.3 }] },
-                options: { responsive: true, plugins: { title: { display: true, text: 'SoC vs Waktu' } } }
-            });
+            const labels = data.map(d=>d.t);
+            if(chart1) chart1.destroy();
+            if(chart2) chart2.destroy();
 
-            if (dsocdtChart) dsocdtChart.destroy();
-            dsocdtChart = new Chart(document.getElementById('dsocdtChart'), {
-                type: 'line',
-                data: { labels, datasets: [{ label: 'dSoC/dt (%/menit)', data: dsocdt, borderColor: '#ff6b00', backgroundColor: 'rgba(255,107,0,0.2)', fill: true }] },
-                options: { responsive: true, plugins: { title: { display: true, text: 'Laju Pengisian vs Waktu' } } }
-            });
-
-            return { avg, skor, data, dsocdt };
+            chart1 = new Chart(document.getElementById('socChart'), {type:'line', data:{labels, datasets:[{label:'SoC (%)', data:data.map(d=>d.soc), borderColor:'#60a5fa', tension:0.4, fill:true}]}, options:{responsive:true}});
+            chart2 = new Chart(document.getElementById('dsocdtChart'), {type:'line', data:{labels, datasets:[{label:'dSoC/dt', data:rates, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.3)', fill:true}]}, options:{responsive:true}});
         }
 
-        // Ekspor CSV
+        // Ekspor
         document.getElementById('exportCSV').onclick = () => {
-            const data = getData();
-            let csv = 'Waktu (menit),SoC (%)\n';
-            data.forEach(d => csv += `${d.t},${d.soc}\n`);
-            download(csv, 'data_charger.csv', 'text/csv');
+            let csv = "Waktu,SoC\n" + getData().map(d=>`${d.t},${d.soc}`).join("\n");
+            download(csv, "data_charger.csv", "text/csv");
         };
-
-        // Ekspor Laporan HTML
         document.getElementById('exportHTML').onclick = () => {
-            const {avg, skor} = calculate() || {};
-            const data = getData();
-            const html = `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>Laporan Efisiensi Charger</title><style>body{font-family:sans-serif;padding:20px;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #ddd;padding:8px;}</style></head><body>
-                <h1>Laporan Analisis Efisiensi Charger HP</h1>
-                <p><strong>Rata-rata dSoC/dt:</strong> ${avg?.toFixed(4) || '-'} %/menit</p>
-                <p><strong>Skor Efisiensi:</strong> ${skor || '-'} / 100</p>
-                <h2>Data Percobaan</h2>
-                <table><tr><th>Waktu</th><th>SoC</th></tr>${data.map(d=>`<tr><td>${d.t}</td><td>${d.soc}</td></tr>`).join('')}</table>
-                <p>Generated on ${new Date().toLocaleString('id-ID')}</p>
-            </body></html>`;
-            download(html, 'laporan_efisiensi_charger.html', 'text/html');
+            const {avg, skor} = calc() || {};
+            const html = `<!DOCTYPE html><html><head><title>Laporan Charger</title></head><body style="font-family:sans-serif;padding:40px;background:#0f172a;color:white;">
+                <h1 style="color:#60a5fa">Laporan Efisiensi Charger</h1>
+                <p>Rata-rata: ${avg?.toFixed(3)} %/menit | Skor: ${skor}/100</p>
+                <table border="1" style="width:100%;border-collapse:collapse;"><tr><th>Waktu</th><th>SoC</th></tr>
+                ${getData().map(d=>`<tr><td>${d.t}</td><td>${d.soc}</td></tr>`).join('')}</table></body></html>`;
+            download(html, "laporan.html", "text/html");
         };
-
-        function download(content, filename, type) {
-            const blob = new Blob([content], {type});
-            const url = URL.createObjectURL(blob);
+        function download(text, name, type) {
             const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
+            a.href = URL.createObjectURL(new Blob([text], {type}));
+            a.download = name;
             a.click();
-            URL.revokeObjectURL(url);
         }
 
-        // Upload Publik (localStorage)
-        uploadPublicBtn.onclick = () => {
-            const result = calculate();
-            if (!result) return alert('Hitung dulu data!');
-            if (!merkCharger.value || !hpModel.value) return alert('Isi merk charger dan model HP');
-            const entry = {
-                merk: merkCharger.value,
-                hp: hpModel.value,
-                avg: result.avg.toFixed(4),
-                skor: result.skor,
-                time: new Date().toLocaleString('id-ID')
-            };
-            const feeds = JSON.parse(localStorage.getItem('chargerFeeds') || '[]');
-            feeds.unshift(entry);
-            localStorage.setItem('chargerFeeds', JSON.stringify(feeds));
-            loadFeed();
-            alert('Data berhasil diupload ke feed publik (localStorage)!');
+        // Leaderboard
+        uploadBtn.onclick = () => {
+            calc();
+            if (!merk.value || !hp.value) return alert("Isi merk & HP dulu!");
+            const entry = {merk:merk.value, hp:hp.value, avg:avg.toFixed(3), skor, time:new Date().toLocaleString('id-ID')};
+            let list = JSON.parse(localStorage.getItem('chargerLeaderboard')||'[]');
+            list.unshift(entry);
+            localStorage.setItem('chargerLeaderboard', JSON.stringify(list));
+            loadLeaderboard();
         };
-
-        function loadFeed() {
-            const feeds = JSON.parse(localStorage.getItem('chargerFeeds') || '[]');
-            if (feeds.length === 0) {
-                publicFeed.innerHTML = '<p>Belum ada data publik.</p>';
-                return;
-            }
-            publicFeed.innerHTML = `
-                <table>
-                    <thead><tr><th>Merk Charger</th><th>HP</th><th>dSoC/dt (%/menit)</th><th>Skor</th><th>Waktu</th></tr></thead>
-                    <tbody>${feeds.map(f => `<tr><td>${f.merk}</td><td>${f.hp}</td><td>${f.avg}</td><td>${f.skor}</td><td>${f.time}</td></tr>`).join('')}</tbody>
-                </table>
-            `;
+        function loadLeaderboard() {
+            const list = JSON.parse(localStorage.getItem('chargerLeaderboard')||'[]');
+            feed.innerHTML = list.length ? `<table style="width:100%;text-align:left;">
+                <tr style="background:#3b82f6;color:white;"><th>Charger</th><th>HP</th><th>dSoC/dt</th><th>Skor</th><th>Waktu</th></tr>
+                ${list.map(e=>`<tr><td>${e.merk}</td><td>${e.hp}</td><td>${e.avg}</td><td><strong>${e.skor}</strong></td><td>${e.time}</td></tr>`).join('')}
+                </table>` : "<p style='text-align:center;color:#94a3b8;'>Belum ada data publik</p>";
         }
-        loadFeed();
+        loadLeaderboard();
 
-        // Event listener saat input berubah
-        dataTable.addEventListener('input', calculate);
-        calculate(); // inisialisasi
+        // Scroll to top
+        document.getElementById('scrollTop').onclick = () => window.scrollTo({top:0, behavior:'smooth'});
+
+        dataTable.addEventListener('input', calc);
+        calc();
     </script>
 </body>
 </html>
