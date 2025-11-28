@@ -1,128 +1,467 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Analisis Efisiensi Charger HP — dSoC/dt</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisis Efisiensi Charger HP Menggunakan Turunan (dSoC/dt)</title>
 
-  <!-- Tailwind (opsional, CDN) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- MathJax untuk rumus LaTeX -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-  <!-- PapaParse CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <style>
+        :root {
+            --primary: #007bff;
+            --light: #f8fbff;
+            --border: #dee2e6;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #003087;
+        }
+        h1 { font-size: 1.8em; margin: 0; }
+        h2 { color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 8px; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: var(--light);
+            color: var(--primary);
+        }
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            margin: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+        }
+        button:hover { background: #0056b3; }
+        .deleteRow {
+            background: #dc3545;
+        }
+        .deleteRow:hover { background: #c82333; }
 
-  <!-- Styles lokal -->
-  <link rel="stylesheet" href="assets/css/styles.css" />
+        .formula-box {
+            background: #f0f8ff;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 6px solid var(--primary);
+            margin: 20px 0;
+        }
+        .math {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 1.15em;
+            overflow-x: auto;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 25px;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 10px;
+        }
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        canvas {
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        @media (max-width: 768px) {
+            .card { padding: 15px; }
+            button { width: 100%; margin: 8px 0; }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
-  <div class="max-w-6xl mx-auto p-6">
-    <header class="mb-6">
-      <h1 class="text-2xl font-bold">Analisis Efisiensi Charger HP</h1>
-      <p class="text-sm text-gray-600">Dashboard Efisiensi Charger HP — Analisis dSoC/dt</p>
+<body>
+
+    <header>
+        <h1>Analisis Efisiensi Charger HP Menggunakan Turunan<br><small>dSoC/dt (%/menit)</small></h1>
+        <p>Mini Riset – Kalkulus Diferensial Numerik</p>
     </header>
 
-    <!-- UPLOADER -->
-    <section id="uploader" class="mb-6 bg-white p-4 shadow rounded">
-      <h2 class="font-semibold">Unggah CSV</h2>
-      <p class="text-sm text-gray-600">Format CSV wajib: <code>charger,time_min,soc_percent,hp_brand,charger_type,charger_price,uploader</code></p>
+    <main>
+        <!-- Input Data -->
+        <section class="card">
+            <h2>1. Input Data Percobaan</h2>
+            <table id="dataTable">
+                <thead>
+                    <tr><th>Waktu (menit)</th><th>SoC (%)</th><th>Aksi</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="number" step="0.1" min="0" value="0" required></td>
+                        <td><input type="number" min="0" max="100" value="10" required></td>
+                        <td><button class="deleteRow">Hapus</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button id="addRow">Tambah Baris</button>
+            <button id="resetTable">Reset Tabel</button>
+            <button id="pasteCSV">Tempel dari CSV</button>
+        </section>
 
-      <div class="mt-3">
-        <input id="csvFile" type="file" accept=".csv" />
-        <button id="btnPreview" class="ml-3 px-3 py-1 bg-blue-600 text-white rounded">Tampilkan Preview</button>
-      </div>
+        <!-- Rumus & Penjelasan -->
+        <section class="card">
+            <h2>2. Rumus dan Penjelasan Turunan Numerik (dSoC/dt)</h2>
+            <div class="formula-box">
+                <h3>Konsep Dasar</h3>
+                <p>
+                    Laju pengisian baterai didefinisikan sebagai turunan pertama State of Charge (SoC) terhadap waktu:
+                </p>
+                <div class="math">
+                    \[\frac{dSoC}{dt} = \lim_{\Delta t \to 0} \frac{\Delta SoC}{\Delta t}\]
+                </div>
 
-      <div id="previewArea" class="mt-4 hidden">
-        <h3 class="font-medium">Preview (10 baris pertama)</h3>
-        <pre id="previewText" class="bg-gray-100 p-2 rounded text-sm overflow-auto max-h-40"></pre>
+                <h3>Metode Beda Hingga (Finite Difference)</h3>
+                <p><strong>1. Forward Difference</strong> (titik pertama)</p>
+                <div class="math">\[\left(\frac{dSoC}{dt}\right)_0 \approx \frac{SoC_1 - SoC_0}{t_1 - t_0}\]</div>
 
-        <div id="uploaderNameWrap" class="mt-2 hidden">
-          <label class="block text-sm">Masukkan nama Anda (kolom uploader tidak ada):</label>
-          <input id="uploaderName" type="text" class="border p-1 rounded" />
+                <p><strong>2. Backward Difference</strong> (titik terakhir)</p>
+                <div class="math">\[\left(\frac{dSoC}{dt}\right)_n \approx \frac{SoC_n - SoC_{n-1}}{t_n - t_{n-1}}\]</div>
+
+                <p><strong>3. Central Difference</strong> (titik tengah – paling akurat)</p>
+                <div class="math">\[\left(\frac{dSoC}{dt}\right)_i \approx \frac{SoC_{i+1} - SoC_{i-1}}{t_{i+1} - t_{i-1}}\]</div>
+
+                <h3>Skor Efisiensi (0–100)</h3>
+                <div class="math">
+                    \[\text{Skor Efisiensi} = \min\left(100,\ 10 \times \overline{\frac{dSoC}{dt}}\right)\]
+                </div>
+                <p>Keterangan: 10 %/menit ≈ charger super cepat (100 W+). Skor maksimal = 100.</p>
+            </div>
+
+            <h3>Langkah Perhitungan Detail</h3>
+            <div id="stepByStep" style="background:#f9f9f9; padding:15px; border-radius:8px;"></div>
+        </section>
+
+        <!-- Hasil Perhitungan -->
+        <section class="card">
+            <h2>3. Hasil Perhitungan</h2>
+            <div id="calculationResults"></div>
+        </section>
+
+        <!-- Grafik -->
+        <section class="card">
+            <h2>4. Visualisasi Grafik</h2>
+            <canvas id="socChart"></canvas>
+            <canvas id="dsocdtChart"></canvas>
+        </section>
+
+        <!-- Upload Publik -->
+        <section class="card">
+            <h2>5. Upload Data Publik (localStorage)</h2>
+            <label>Merk Charger: <input type="text" id="merkCharger" placeholder="contoh: Anker PowerPort 65W"></label><br><br>
+            <label>Model HP: <input type="text" id="hpModel" placeholder="contoh: Samsung Galaxy S23 Ultra"></label><br><br>
+            <button id="uploadPublic">Upload Data Publik</button>
+        </section>
+
+        <!-- Feed Publik -->
+        <section class="card">
+            <h2>6. Feed Publik</h2>
+            <div id="publicFeed"></div>
+        </section>
+
+        <!-- Ekspor -->
+        <section class="card">
+            <h2>7. Ekspor Data</h2>
+            <button id="exportCSV">Download CSV</button>
+            <button id="exportHTML">Download Laporan HTML</button>
+        </section>
+    </main>
+
+    <!-- Modal CSV -->
+    <div id="csvModal" class="modal">
+        <div class="modal-content">
+            <span class="close">×</span>
+            <h3>Tempel CSV (format: waktu,SoC per baris)</h3>
+            <textarea id="csvInput" placeholder="0,10&#10;5,35&#10;10,62&#10;15,85"></textarea><br><br>
+            <button id="submitCSV">Submit</button>
         </div>
+    </div>
 
-        <div class="mt-3">
-          <label class="inline-flex items-center"><input type="checkbox" id="toggleSmoothing" class="mr-2"> Gunakan smoothing (moving average window=3)</label>
-        </div>
+    <script>
+        // === Semua JavaScript di sini ===
+        const dataTable = document.querySelector('#dataTable tbody');
+        const addRowBtn = document.getElementById('addRow');
+        const resetTableBtn = document.getElementById('resetTable');
+        const pasteCSVBtn = document.getElementById('pasteCSV');
+        const csvModal = document.getElementById('csvModal');
+        const closeModal = document.querySelector('.close');
+        const submitCSV = document.getElementById('submitCSV');
+        const csvInput = document.getElementById('csvInput');
+        const stepByStep = document.getElementById('stepByStep');
+        const calculationResults = document.getElementById('calculationResults');
+        const uploadPublicBtn = document.getElementById('uploadPublic');
+        const merkCharger = document.getElementById('merkCharger');
+        const hpModel = document.getElementById('hpModel');
+        const publicFeed = document.getElementById('publicFeed');
 
-        <div class="mt-3">
-          <button id="btnUpload" class="px-3 py-1 bg-green-600 text-white rounded">Unggah CSV (simpan lokal)</button>
-          <span id="uploadStatus" class="ml-3 text-sm text-gray-600"></span>
-        </div>
-      </div>
-    </section>
+        let socChart = null, dsocdtChart = null;
 
-    <!-- FILTER -->
-    <section id="filterSection" class="mb-6 bg-white p-4 shadow rounded">
-      <h2 class="font-semibold">Filter & Kontrol</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-        <div>
-          <label class="block text-sm">Merek HP (hp_brand)</label>
-          <select id="filterBrand" class="w-full border p-1 rounded"><option value="">(Semua)</option></select>
-        </div>
-        <div>
-          <label class="block text-sm">Tipe Charger (charger_type)</label>
-          <select id="filterChgType" class="w-full border p-1 rounded"><option value="">(Semua)</option></select>
-        </div>
-        <div>
-          <label class="block text-sm">Rentang Harga (Rp)</label>
-          <input id="filterPriceMin" type="number" placeholder="Min" class="w-1/2 border p-1 rounded" />
-          <input id="filterPriceMax" type="number" placeholder="Max" class="w-1/2 border p-1 rounded" />
-        </div>
-        <div>
-          <label class="block text-sm">Uploader</label>
-          <select id="filterUploader" class="w-full border p-1 rounded"><option value="">(Semua)</option></select>
-        </div>
-      </div>
+        // Tambah baris
+        addRowBtn.onclick = () => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input type="number" step="0.1" min="0" required></td>
+                <td><input type="number" min="0" max="100" required></td>
+                <td><button class="deleteRow">Hapus</button></td>
+            `;
+            dataTable.appendChild(row);
+            attachDelete();
+            row.querySelector('input').focus();
+        };
 
-      <div class="mt-3">
-        <label class="block text-sm">Tampilkan grup</label>
-        <select id="selectGroup" class="w-full border p-1 rounded"><option value="all">Tampilkan semua</option></select>
-      </div>
-    </section>
+        // Hapus baris
+        function attachDelete() {
+            document.querySelectorAll('.deleteRow').forEach(btn => {
+                btn.onclick = () => {
+                    btn.closest('tr').remove();
+                    calculate();
+                };
+            });
+        }
+        attachDelete();
 
-    <!-- CHARTS -->
-    <section id="charts" class="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div class="bg-white p-4 shadow rounded">
-        <h3 class="font-medium">SoC(t)</h3>
-        <canvas id="chartSoC"></canvas>
-      </div>
-      <div class="bg-white p-4 shadow rounded">
-        <h3 class="font-medium">dSoC/dt ( %/menit )</h3>
-        <canvas id="chartD"></canvas>
-      </div>
-    </section>
+        // Reset tabel
+        resetTableBtn.onclick = () => {
+            dataTable.innerHTML = `<tr>
+                <td><input type="number" step="0.1" min="0" value="0" required></td>
+                <td><input type="number" min="0" max="100" value="10" required></td>
+                <td><button class="deleteRow">Hapus</button></td>
+            </tr>`;
+            attachDelete();
+            calculate();
+        };
 
-    <!-- SUMMARY TABLE -->
-    <section id="tableSection" class="bg-white p-4 shadow rounded">
-      <h3 class="font-medium">Ringkasan Grup</h3>
-      <div class="overflow-auto mt-3">
-        <table id="summaryTable" class="min-w-full text-sm">
-          <thead class="bg-gray-100">
-            <tr>
-              <th class="p-2">Nama Charger</th>
-              <th class="p-2">Merek HP</th>
-              <th class="p-2">Tipe Charger</th>
-              <th class="p-2">Harga (Rp)</th>
-              <th class="p-2">Uploader</th>
-              <th class="p-2">Tanggal</th>
-              <th class="p-2">Rata-rata (%/menit)</th>
-              <th class="p-2">Estimasi 20→80 (menit)</th>
-              <th class="p-2">Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="summaryBody"></tbody>
-        </table>
-      </div>
-    </section>
+        // Modal CSV
+        pasteCSVBtn.onclick = () => csvModal.style.display = 'block';
+        closeModal.onclick = () => csvModal.style.display = 'none';
+        window.onclick = e => { if (e.target === csvModal) csvModal.style.display = 'none'; };
 
-    <footer class="mt-6 text-xs text-gray-600">
-      Data bersifat publik. Jika ingin menghapus unggahan, hubungi admin.
-    </footer>
-  </div>
-  <!-- Script lokal -->
-  <script src="assets/js/app.js" defer></script>
+        submitCSV.onclick = () => {
+            const lines = csvInput.value.trim().split('\n');
+            dataTable.innerHTML = '';
+            lines.forEach(line => {
+                const [t, soc] = line.split(',').map(s => parseFloat(s.trim()));
+                if (!isNaN(t) && !isNaN(soc)) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><input type="number" step="0.1" value="${t}" required></td>
+                        <td><input type="number" value="${soc}" required></td>
+                        <td><button class="deleteRow">Hapus</button></td>
+                    `;
+                    dataTable.appendChild(row);
+                }
+            });
+            attachDelete();
+            csvModal.style.display = 'none';
+            calculate();
+        };
+
+        // Ambil data dari tabel
+        function getData() {
+            const rows = dataTable.querySelectorAll('tr');
+            const data = [];
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                const t = parseFloat(inputs[0].value);
+                const soc = parseFloat(inputs[1].value);
+                if (!isNaN(t) && !isNaN(soc)) data.push({t, soc});
+            });
+            data.sort((a,b) => a.t - b.t);
+            return data;
+        }
+
+        // Hitung turunan & update semua
+        function calculate() {
+            const data = getData();
+            if (data.length < 2) {
+                calculationResults.innerHTML = '<p style="color:red;">Masukkan minimal 2 titik data.</p>';
+                stepByStep.innerHTML = '';
+                if (socChart) socChart.destroy();
+                if (dsocdtChart) dsocdtChart.destroy();
+                return;
+            }
+
+            const dsocdt = [];
+            const steps = [];
+
+            for (let i = 0; i < data.length; i++) {
+                let val, tex;
+                if (i === 0) {
+                    // Forward
+                    val = (data[1].soc - data[0].soc) / (data[1].t - data[0].t);
+                    tex = `Forward (i=0): \\frac{${data[1].soc} - ${data[0].soc}}{${data[1].t} - ${data[0].t}} = ${val.toFixed(4)}`;
+                } else if (i === data.length-1) {
+                    // Backward
+                    val = (data[i].soc - data[i-1].soc) / (data[i].t - data[i-1].t);
+                    tex = `Backward (i=${i}): \\frac{${data[i].soc} - ${data[i-1].soc}}{${data[i].t} - ${data[i-1].t}} = ${val.toFixed(4)}`;
+                } else {
+                    // Central
+                    val = (data[i+1].soc - data[i-1].soc) / (data[i+1].t - data[i-1].t);
+                    tex = `Central (i=${i}): \\frac{${data[i+1].soc} - ${data[i-1].soc}}{${data[i+1].t} - ${data[i-1].t}} = ${val.toFixed(4)}`;
+                }
+                dsocdt.push(val);
+                steps.push(tex);
+            }
+
+            const avg = dsocdt.reduce((a,b) => a+b, 0) / dsocdt.length;
+            const skor = Math.min(100, avg * 10).toFixed(2);
+
+            // Hasil
+            calculationResults.innerHTML = `
+                <p><strong>Rata-rata dSoC/dt:</strong> ${avg.toFixed(4)} %/menit</p>
+                <p><strong>Skor Efisiensi:</strong> ${skor}/100</p>
+            `;
+
+            // Langkah detail
+            stepByStep.innerHTML = '<ul>' + steps.map(s => `<li>${s}</li>`).join('') + '</ul>';
+            MathJax.typesetPromise([stepByStep]);
+
+            // Grafik
+            const labels = data.map(d => d.t);
+            if (socChart) socChart.destroy();
+            socChart = new Chart(document.getElementById('socChart'), {
+                type: 'line',
+                data: { labels, datasets: [{ label: 'SoC (%)', data: data.map(d => d.soc), borderColor: '#007bff', tension: 0.3 }] },
+                options: { responsive: true, plugins: { title: { display: true, text: 'SoC vs Waktu' } } }
+            });
+
+            if (dsocdtChart) dsocdtChart.destroy();
+            dsocdtChart = new Chart(document.getElementById('dsocdtChart'), {
+                type: 'line',
+                data: { labels, datasets: [{ label: 'dSoC/dt (%/menit)', data: dsocdt, borderColor: '#ff6b00', backgroundColor: 'rgba(255,107,0,0.2)', fill: true }] },
+                options: { responsive: true, plugins: { title: { display: true, text: 'Laju Pengisian vs Waktu' } } }
+            });
+
+            return { avg, skor, data, dsocdt };
+        }
+
+        // Ekspor CSV
+        document.getElementById('exportCSV').onclick = () => {
+            const data = getData();
+            let csv = 'Waktu (menit),SoC (%)\n';
+            data.forEach(d => csv += `${d.t},${d.soc}\n`);
+            download(csv, 'data_charger.csv', 'text/csv');
+        };
+
+        // Ekspor Laporan HTML
+        document.getElementById('exportHTML').onclick = () => {
+            const {avg, skor} = calculate() || {};
+            const data = getData();
+            const html = `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>Laporan Efisiensi Charger</title><style>body{font-family:sans-serif;padding:20px;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #ddd;padding:8px;}</style></head><body>
+                <h1>Laporan Analisis Efisiensi Charger HP</h1>
+                <p><strong>Rata-rata dSoC/dt:</strong> ${avg?.toFixed(4) || '-'} %/menit</p>
+                <p><strong>Skor Efisiensi:</strong> ${skor || '-'} / 100</p>
+                <h2>Data Percobaan</h2>
+                <table><tr><th>Waktu</th><th>SoC</th></tr>${data.map(d=>`<tr><td>${d.t}</td><td>${d.soc}</td></tr>`).join('')}</table>
+                <p>Generated on ${new Date().toLocaleString('id-ID')}</p>
+            </body></html>`;
+            download(html, 'laporan_efisiensi_charger.html', 'text/html');
+        };
+
+        function download(content, filename, type) {
+            const blob = new Blob([content], {type});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Upload Publik (localStorage)
+        uploadPublicBtn.onclick = () => {
+            const result = calculate();
+            if (!result) return alert('Hitung dulu data!');
+            if (!merkCharger.value || !hpModel.value) return alert('Isi merk charger dan model HP');
+            const entry = {
+                merk: merkCharger.value,
+                hp: hpModel.value,
+                avg: result.avg.toFixed(4),
+                skor: result.skor,
+                time: new Date().toLocaleString('id-ID')
+            };
+            const feeds = JSON.parse(localStorage.getItem('chargerFeeds') || '[]');
+            feeds.unshift(entry);
+            localStorage.setItem('chargerFeeds', JSON.stringify(feeds));
+            loadFeed();
+            alert('Data berhasil diupload ke feed publik (localStorage)!');
+        };
+
+        function loadFeed() {
+            const feeds = JSON.parse(localStorage.getItem('chargerFeeds') || '[]');
+            if (feeds.length === 0) {
+                publicFeed.innerHTML = '<p>Belum ada data publik.</p>';
+                return;
+            }
+            publicFeed.innerHTML = `
+                <table>
+                    <thead><tr><th>Merk Charger</th><th>HP</th><th>dSoC/dt (%/menit)</th><th>Skor</th><th>Waktu</th></tr></thead>
+                    <tbody>${feeds.map(f => `<tr><td>${f.merk}</td><td>${f.hp}</td><td>${f.avg}</td><td>${f.skor}</td><td>${f.time}</td></tr>`).join('')}</tbody>
+                </table>
+            `;
+        }
+        loadFeed();
+
+        // Event listener saat input berubah
+        dataTable.addEventListener('input', calculate);
+        calculate(); // inisialisasi
+    </script>
 </body>
 </html>
