@@ -83,7 +83,7 @@
             align-items: center;
             gap: 12px;
         }
-        h2::before { content: "Lightning Bolt"; }
+        h2::before { content: ""; }
 
         table {
             width: 100%;
@@ -312,117 +312,77 @@
         <p>Dibuat  hanya untuk tugas kuliah</p>
     </div>
 
-    <!-- SCRIPT FIREBASE (CDN imports) -->
-    <script type="module">
-      // Import dari CDN (cocok untuk website statis / GitHub Pages)
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
-      import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
-      import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-analytics.js";
+    <!-- REPLACE: Realtime Database (REST) - gunakan URL project Anda -->
+    <script>
+      // Ganti DB_URL jika perlu; saat ini memakai URL yang Anda berikan:
+      const DB_URL = "https://analisis-efisiensi-charger-default-rtdb.asia-southeast1.firebasedatabase.app";
 
-      // --- Konfigurasi Firebase (dari Firebase Console) ---
-      const firebaseConfig = {
-        apiKey: "AIzaSyBLORFFK1omCWwGdHeaT5DGIO6iODSeDKc",
-        authDomain: "analisis-efisiensi-charger.firebaseapp.com",
-        projectId: "analisis-efisiensi-charger",
-        storageBucket: "analisis-efisiensi-charger.firebasestorage.app",
-        messagingSenderId: "469349796334",
-        appId: "1:469349796334:web:e17b6003e0db3c1bb326ff",
-        measurementId: "G-DVENHT2JBP"
-      };
+      function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-      // Inisialisasi Firebase & Analytics
-      const app = initializeApp(firebaseConfig);
-      try {
-        // Analytics kadang tidak tersedia di beberapa lingkungan (local file), try/catch aman
-        const analytics = getAnalytics(app);
-      } catch(e) {
-        // Jika gagal, lanjutkan tanpa analytics
-        console.warn('Analytics tidak tersedia di lingkungan ini.', e);
-      }
-
-      // Inisialisasi Firestore
-      const db = getFirestore(app);
-      const lbCol = collection(db, "leaderboard");
-
-      // Upload data ke Firestore
+      // Upload ke Realtime Database (POST -> new child)
       window.uploadToFirestore = async function(merk, hp, avg, skor) {
         try {
-          await addDoc(lbCol, {
+          const payload = {
             merk: merk,
             hp: hp,
             avg: parseFloat(avg) || 0,
             skor: parseFloat(skor) || 0,
             waktu: new Date().toISOString()
+          };
+
+          const res = await fetch(DB_URL + "/leaderboard.json", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
           });
-          alert("Berhasil upload ke leaderboard publik!");
-          if (typeof window.loadFirestoreLeaderboard === "function") {
-            window.loadFirestoreLeaderboard();
+
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error("HTTP " + res.status + " — " + text);
           }
+
+          alert("Berhasil upload ke leaderboard publik!");
+          if (typeof window.loadFirestoreLeaderboard === "function") window.loadFirestoreLeaderboard();
+
         } catch (err) {
-          console.error("UploadToFirestore error:", err);
+          console.error("uploadToRTDB error:", err);
           alert("Gagal upload: " + (err.message || err));
         }
       };
 
-      // Load leaderboard dari Firestore
+      // Load leaderboard dari Realtime DB
       window.loadFirestoreLeaderboard = async function() {
         try {
-          const q = query(lbCol, orderBy("waktu", "desc"), limit(50));
-          const snapshot = await getDocs(q);
-
-          if (!snapshot) {
-            document.getElementById('publicFeed').innerHTML = "<p>Belum ada data</p>";
+          const res = await fetch(DB_URL + "/leaderboard.json");
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const data = await res.json();
+          if (!data) {
+            document.getElementById("publicFeed").innerHTML = "<p>Belum ada data</p>";
             return;
           }
 
-          let html = `
-            <table>
-              <thead>
-                <tr>
-                  <th>Charger</th>
-                  <th>HP</th>
-                  <th>dSoC/dt</th>
-                  <th>Skor</th>
-                  <th>Waktu</th>
-                </tr>
-              </thead>
-              <tbody>
-          `;
+          const rows = Object.keys(data).map(k => ({ id: k, ...data[k] }))
+                        .sort((a,b) => new Date(b.waktu) - new Date(a.waktu));
 
-          snapshot.forEach(doc => {
-            const d = doc.data();
-            html += `
-              <tr>
-                <td>${escapeHtml(d.merk)}</td>
-                <td>${escapeHtml(d.hp)}</td>
-                <td>${(d.avg || 0).toFixed(3)}</td>
-                <td>${(d.skor || 0).toFixed(1)}</td>
-                <td>${new Date(d.waktu).toLocaleString("id-ID")}</td>
-              </tr>
-            `;
+          let html = `<table><thead><tr><th>Charger</th><th>HP</th><th>dSoC/dt</th><th>Skor</th><th>Waktu</th></tr></thead><tbody>`;
+          rows.forEach(d => {
+            html += `<tr>
+                      <td>${escapeHtml(d.merk||'')}</td>
+                      <td>${escapeHtml(d.hp||'')}</td>
+                      <td>${((d.avg||0)).toFixed(3)}</td>
+                      <td>${((d.skor||0)).toFixed(1)}</td>
+                      <td>${new Date(d.waktu).toLocaleString("id-ID")}</td>
+                     </tr>`;
           });
-
           html += "</tbody></table>";
           document.getElementById("publicFeed").innerHTML = html;
         } catch (err) {
-          console.error("LoadFirestoreLeaderboard error:", err);
-          document.getElementById('publicFeed').innerHTML = "<p>Terjadi kesalahan saat memuat leaderboard online.</p>";
+          console.error("loadRTDB error:", err);
+          document.getElementById("publicFeed").innerHTML = "<p>Gagal memuat leaderboard.</p>";
         }
       };
 
-      // util: sanitasi minimal
-      function escapeHtml(s) {
-        if (!s) return "";
-        return String(s).replace(/[&<>"']/g, function(m) {
-          return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
-        });
-      }
-
-      // Muat leaderboard saat halaman selesai dimuat
-      window.addEventListener("load", () => {
-        // muat setelah elemen siap
-        setTimeout(()=>{ if (document.getElementById('publicFeed')) window.loadFirestoreLeaderboard(); }, 150);
-      });
+      window.addEventListener("load", () => { setTimeout(()=>{ if (document.getElementById('publicFeed')) window.loadFirestoreLeaderboard(); }, 150); });
     </script>
 
     <!-- SCRIPT LOGIKA APLIKASI UTAMA -->
@@ -586,7 +546,7 @@
         };
         function download(t,n,y){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:y}));a.download=n;a.click();}
 
-        // Leaderboard: kirim ke Firestore
+        // Leaderboard: kirim ke Realtime DB via REST
         document.getElementById('uploadPublic').onclick = () => {
             const merk = merkInput.value.trim();
             const hp = hpInput.value.trim();
@@ -602,7 +562,7 @@
             const skor = Math.min(100, Math.abs(avgRateGlobal)*10).toFixed(1);
 
             if (typeof window.uploadToFirestore !== "function") {
-                alert("Leaderboard online belum dikonfigurasi (FirebaseConfig belum diisi dengan benar).");
+                alert("Leaderboard online belum dikonfigurasi (upload function belum tersedia).");
                 return;
             }
             window.uploadToFirestore(merk, hp, avg, skor);
@@ -610,7 +570,7 @@
 
         // Scroll ke atas
         document.getElementById('scrollTop').onclick = () => window.scrollTo({top:0,behavior:'smooth'});
-        tbody.addEventListener('input', calc);
+        tbody.addEventListener('input', calc);s
     </script>
 </body>
 </html>
