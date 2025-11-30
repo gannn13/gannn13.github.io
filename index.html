@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kalkulus Diferensial • Analisis Charger HP – Kelompok 2</title>
-    <meta name="description" content="Proyek Akhir Mata Kuliah Kalkulus Diferensial – Analisis Efisiensi Charger menggunakan Turunan Numerik dSoC/dt">
+    <meta name="description" content="Analisis Efisiensi Charger menggunakan Turunan Numerik dSoC/dt">
 
     <!-- Chart.js & MathJax -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -223,7 +223,7 @@
             <h1 class="title">Analisis Efisiensi Charger HP</h1>
             <p class="subtitle">Turunan Numerik dSoC/dt (%/menit)</p>
             <div class="badge">PROYEK AKHIR • KALKULUS DIFERENSIAL</div>
-            <p style="margin-top:15px; color:#e0e7ff;">Kelompok 2 • Semester Genap 2024/2025</p>
+            <p style="margin-top:15px; color:#e0e7ff;">2025</p>
         </header>
 
         <!-- 1. Input Data -->
@@ -308,10 +308,124 @@
     </div>
 
     <div class="footer">
-        <p>© 2025 Kelompok 2 • Kalkulus Diferensial</p>
-        <p>100% JavaScript • Hosted di GitHub Pages</p>
+        <p> 2025 Kelompok 2 • Kalkulus Diferensial</p>
+        <p>Dibuat  hanya untuk tugas kuliah</p>
     </div>
 
+    <!-- SCRIPT FIREBASE (CDN imports) -->
+    <script type="module">
+      // Import dari CDN (cocok untuk website statis / GitHub Pages)
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+      import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-analytics.js";
+
+      // --- Konfigurasi Firebase (dari Firebase Console) ---
+      const firebaseConfig = {
+        apiKey: "AIzaSyBLORFFK1omCWwGdHeaT5DGIO6iODSeDKc",
+        authDomain: "analisis-efisiensi-charger.firebaseapp.com",
+        projectId: "analisis-efisiensi-charger",
+        storageBucket: "analisis-efisiensi-charger.firebasestorage.app",
+        messagingSenderId: "469349796334",
+        appId: "1:469349796334:web:e17b6003e0db3c1bb326ff",
+        measurementId: "G-DVENHT2JBP"
+      };
+
+      // Inisialisasi Firebase & Analytics
+      const app = initializeApp(firebaseConfig);
+      try {
+        // Analytics kadang tidak tersedia di beberapa lingkungan (local file), try/catch aman
+        const analytics = getAnalytics(app);
+      } catch(e) {
+        // Jika gagal, lanjutkan tanpa analytics
+        console.warn('Analytics tidak tersedia di lingkungan ini.', e);
+      }
+
+      // Inisialisasi Firestore
+      const db = getFirestore(app);
+      const lbCol = collection(db, "leaderboard");
+
+      // Upload data ke Firestore
+      window.uploadToFirestore = async function(merk, hp, avg, skor) {
+        try {
+          await addDoc(lbCol, {
+            merk: merk,
+            hp: hp,
+            avg: parseFloat(avg) || 0,
+            skor: parseFloat(skor) || 0,
+            waktu: new Date().toISOString()
+          });
+          alert("Berhasil upload ke leaderboard publik!");
+          if (typeof window.loadFirestoreLeaderboard === "function") {
+            window.loadFirestoreLeaderboard();
+          }
+        } catch (err) {
+          console.error("UploadToFirestore error:", err);
+          alert("Gagal upload: " + (err.message || err));
+        }
+      };
+
+      // Load leaderboard dari Firestore
+      window.loadFirestoreLeaderboard = async function() {
+        try {
+          const q = query(lbCol, orderBy("waktu", "desc"), limit(50));
+          const snapshot = await getDocs(q);
+
+          if (!snapshot) {
+            document.getElementById('publicFeed').innerHTML = "<p>Belum ada data</p>";
+            return;
+          }
+
+          let html = `
+            <table>
+              <thead>
+                <tr>
+                  <th>Charger</th>
+                  <th>HP</th>
+                  <th>dSoC/dt</th>
+                  <th>Skor</th>
+                  <th>Waktu</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+
+          snapshot.forEach(doc => {
+            const d = doc.data();
+            html += `
+              <tr>
+                <td>${escapeHtml(d.merk)}</td>
+                <td>${escapeHtml(d.hp)}</td>
+                <td>${(d.avg || 0).toFixed(3)}</td>
+                <td>${(d.skor || 0).toFixed(1)}</td>
+                <td>${new Date(d.waktu).toLocaleString("id-ID")}</td>
+              </tr>
+            `;
+          });
+
+          html += "</tbody></table>";
+          document.getElementById("publicFeed").innerHTML = html;
+        } catch (err) {
+          console.error("LoadFirestoreLeaderboard error:", err);
+          document.getElementById('publicFeed').innerHTML = "<p>Terjadi kesalahan saat memuat leaderboard online.</p>";
+        }
+      };
+
+      // util: sanitasi minimal
+      function escapeHtml(s) {
+        if (!s) return "";
+        return String(s).replace(/[&<>"']/g, function(m) {
+          return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+        });
+      }
+
+      // Muat leaderboard saat halaman selesai dimuat
+      window.addEventListener("load", () => {
+        // muat setelah elemen siap
+        setTimeout(()=>{ if (document.getElementById('publicFeed')) window.loadFirestoreLeaderboard(); }, 150);
+      });
+    </script>
+
+    <!-- SCRIPT LOGIKA APLIKASI UTAMA -->
     <script>
         const tbody = document.querySelector('#dataTable tbody');
         const addRow = document.getElementById('addRow');
@@ -324,6 +438,8 @@
         const stepByStep = document.getElementById('stepByStep');
         const results = document.getElementById('calculationResults');
         const analysisBox = document.getElementById('analysisBox');
+        const merkInput = document.getElementById('merkCharger');
+        const hpInput = document.getElementById('hpModel');
         let chartSoc, chartRate, avgRateGlobal = 0;
 
         // Mulai dengan 1 baris kosong
@@ -358,6 +474,13 @@
                 };
             });
         }
+
+        // tombol reset tabel
+        reset.onclick = () => {
+            tbody.innerHTML = '';
+            initEmptyRow();
+            calc();
+        };
 
         // CSV Modal
         paste.onclick = () => modal.style.display = 'flex';
@@ -404,13 +527,13 @@
             for (let i = 0; i < data.length; i++) {
                 let rate, tex;
                 if (i === 0) {
-                    rate = (data[1].soc - data[0].soc) / (data[1].t - data[0].t);
+                    rate = (data[1].soc - data[0].soc) / (data[1].t - data[0].t || 1);
                     tex = `Forward: \\frac{${data[1].soc} - ${data[0].soc}}{${data[1].t} - ${data[0].t}} = ${rate.toFixed(4)}`;
                 } else if (i === data.length-1) {
-                    rate = (data[i].soc - data[i-1].soc) / (data[i].t - data[i-1].t);
+                    rate = (data[i].soc - data[i-1].soc) / (data[i].t - data[i-1].t || 1);
                     tex = `Backward: \\frac{${data[i].soc} - ${data[i-1].soc}}{${data[i].t} - ${data[i-1].t}} = ${rate.toFixed(4)}`;
                 } else {
-                    rate = (data[i+1].soc - data[i-1].soc) / (data[i+1].t - data[i-1].t);
+                    rate = (data[i+1].soc - data[i-1].soc) / (data[i+1].t - data[i-1].t || 1);
                     tex = `Central: \\frac{${data[i+1].soc} - ${data[i-1].soc}}{${data[i+1].t} - ${data[i-1].t}} = ${rate.toFixed(4)}`;
                 }
                 rates.push(rate);
@@ -455,7 +578,7 @@
             chartRate = new Chart(document.getElementById('dsocdtChart'), { type: 'line', data: { labels, datasets: [{ label: 'dSoC/dt', data: rates, borderColor: '#f59e0b', tension: 0.4, fill: true }] }, options: { responsive: true } });
         }
 
-        // Ekspor, Leaderboard, dll (sama seperti sebelumnya, dipersingkat karena sudah teruji)
+        // Ekspor
         document.getElementById('exportCSV').onclick = () => download("Waktu,SoC\n"+getData().map(d=>`${d.t},${d.soc}`).join("\n"), "data.csv", "text/csv");
         document.getElementById('exportHTML').onclick = () => {
             const html = `<h1>Laporan Kelompok 2</h1><p>dSoC/dt: ${avgRateGlobal.toFixed(3)} %/menit</p><table border="1">${getData().map(d=>`<tr><td>${d.t}</td><td>${d.soc}</td></tr>`).join('')}</table>`;
@@ -463,21 +586,29 @@
         };
         function download(t,n,y){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:y}));a.download=n;a.click();}
 
-        // Leaderboard (localStorage)
+        // Leaderboard: kirim ke Firestore
         document.getElementById('uploadPublic').onclick = () => {
-            if (!merk.value || !hp.value) return alert("Isi merk & HP!");
-            const e = {merk:merk.value, hp:hp.value, avg:avgRateGlobal.toFixed(3), skor:Math.min(100,Math.abs(avgRateGlobal)*10).toFixed(1), time:new Date().toLocaleString('id-ID')};
-            let l = JSON.parse(localStorage.getItem('lb')||'[]');
-            l.unshift(e);
-            localStorage.setItem('lb',JSON.stringify(l));
-            loadLb();
-        };
-        function loadLb() {
-            const l = JSON.parse(localStorage.getItem('lb')||'[]');
-            document.getElementById('publicFeed').innerHTML = l.length ? `<table><tr style="background:var(--primary);color:white;"><th>Charger</th><th>HP</th><th>dSoC/dt</th><th>Skor</th></tr>${l.map(e=>`<tr><td>${e.merk}</td><td>${e.hp}</td><td>${e.avg}</td><td>${e.skor}</td></tr>`).join('')}</table>` : "<p>Belum ada data</p>";
-        }
-        loadLb();
+            const merk = merkInput.value.trim();
+            const hp = hpInput.value.trim();
+            if (!merk || !hp) {
+                alert("Mohon isi merk & tipe charger serta model HP terlebih dahulu.");
+                return;
+            }
+            if (isNaN(avgRateGlobal)) {
+                alert("Silakan hitung dSoC/dt terlebih dahulu dengan mengisi data pengukuran.");
+                return;
+            }
+            const avg = avgRateGlobal.toFixed(3);
+            const skor = Math.min(100, Math.abs(avgRateGlobal)*10).toFixed(1);
 
+            if (typeof window.uploadToFirestore !== "function") {
+                alert("Leaderboard online belum dikonfigurasi (FirebaseConfig belum diisi dengan benar).");
+                return;
+            }
+            window.uploadToFirestore(merk, hp, avg, skor);
+        };
+
+        // Scroll ke atas
         document.getElementById('scrollTop').onclick = () => window.scrollTo({top:0,behavior:'smooth'});
         tbody.addEventListener('input', calc);
     </script>
