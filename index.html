@@ -33,344 +33,321 @@
             min-height: 100vh;
             padding: 20px 10px;
         }
-        .container { max-width: 1400px; margin: 0 auto; }
+        .container { max-width: 1100px; margin: 0 auto; padding-top: 20px; }
 
+        /* Fixed side menu (kiri atas), tetap terlihat saat scroll */
+        .side-nav {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 1400;
+            display: flex;
+            gap: 8px;
+            flex-direction: column;
+            width: auto;
+            background: rgba(6,10,20,0.45);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.04);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+        .side-nav .nav-btn {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.06);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight:700;
+            white-space:nowrap;
+        }
+        .side-nav .nav-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            box-shadow: 0 8px 24px rgba(59,130,246,0.18);
+        }
+
+        /* Header centered top (Bukan fixed; bagian halaman) */
         header {
             text-align: center;
-            padding: 60px 20px;
+            margin-bottom: 18px;
+        }
+        .header-inner {
+            display:inline-block;
             background: linear-gradient(135deg, #0f172a, #1e3a8a);
-            border-radius: 0 0 32px 32px;
-            margin-bottom: 40px;
-            box-shadow: 0 20px 60px rgba(30,60,138,0.5);
-            position: relative;
-            overflow: hidden;
+            padding: 14px 22px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(30,60,138,0.45);
+            border: 1px solid var(--border);
         }
-        header::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(45deg, transparent 30%, rgba(59,130,246,0.1) 50%, transparent 70%);
-            animation: shine 4s infinite;
-        }
-        @keyframes shine { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        .title { font-size: 1.4rem; font-weight: 900; color: white; text-shadow: 0 0 18px rgba(96,165,250,0.5); margin-bottom:4px; }
+        .subtitle { font-size: 0.9rem; color: #e0e7ff; }
 
-        .title { font-size: 2.8em; font-weight: 900; color: white; text-shadow: 0 0 30px rgba(96,165,250,0.6); }
-        .subtitle { font-size: 1.3em; color: #e0e7ff; margin: 10px 0; }
         .badge {
+            display:inline-block;
             background: linear-gradient(45deg, #dc2626, #f97316);
-            color: white; padding: 12px 28px; border-radius: 50px;
-            font-weight: bold; margin: 20px 0; display: inline-block;
-            box-shadow: 0 0 25px rgba(220,38,38,0.5);
+            color: white; padding: 6px 12px; border-radius: 30px;
+            font-weight: bold; box-shadow: 0 0 18px rgba(220,38,38,0.25);
+            font-size:0.75rem; margin-left:8px;
         }
 
         .card {
             background: var(--card);
-            backdrop-filter: blur(16px);
-            border-radius: 24px;
-            padding: 35px;
-            margin-bottom: 35px;
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
             border: 1px solid var(--border);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-            transition: all 0.4s;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.6);
         }
-        .card:hover { transform: translateY(-10px); box-shadow: 0 25px 60px rgba(59,130,246,0.2); }
 
-        h2 {
-            color: var(--accent);
-            font-size: 1.8em;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        h2::before { content: ""; }
+        h2 { color: var(--accent); font-size:1.2rem; margin-bottom:12px; }
 
         table {
             width: 100%;
             border-collapse: collapse;
             background: rgba(15,23,42,0.6);
-            border-radius: 16px;
+            border-radius: 12px;
             overflow: hidden;
-            margin: 20px 0;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            margin: 12px 0;
         }
         th {
             background: linear-gradient(135deg, var(--primary), var(--accent));
             color: white;
-            padding: 18px;
+            padding: 12px;
             font-weight: 600;
+            text-align:left;
         }
-        td { padding: 14px; text-align: center; }
-        input {
+        td { padding: 10px; text-align:left; color:var(--text2); border-top:1px solid rgba(255,255,255,0.02); }
+
+        input, select, textarea {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             background: rgba(30,41,59,0.9);
             border: 1px solid transparent;
-            border-radius: 12px;
+            border-radius: 10px;
             color: white;
-            font-size: 1em;
+            font-size: 1rem;
         }
-        input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(59,130,246,0.2); }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 6px rgba(59,130,246,0.08); }
 
         button {
-            padding: 14px 28px;
+            padding: 10px 14px;
             border: none;
-            border-radius: 14px;
+            border-radius: 10px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
         }
-        .btn {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: white;
-            box-shadow: 0 6px 20px rgba(59,130,246,0.3);
-        }
-        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(59,130,246,0.5); }
-        .btn-danger { background: linear-gradient(135deg, #991b1b, #dc2626); }
-        .btn-success { background: linear-gradient(135deg, #059669, #10b981); width: 100%; padding: 20px; font-size: 1.1em; }
+        .btn { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #991b1b, #dc2626); color:white; }
+        .btn-success { background: linear-gradient(135deg, #059669, #10b981); color:white; }
 
-        .formula-box {
-            background: rgba(59,130,246,0.08);
-            padding: 35px;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            margin: 25px 0;
-        }
-        .math {
-            background: rgba(15,23,42,0.9);
-            padding: 25px;
-            border-radius: 16px;
-            margin: 20px 0;
-            font-size: 1.3em;
-            text-align: center;
-            border-left: 6px solid var(--accent);
-        }
+        .formula-box { background: rgba(59,130,246,0.06); padding:16px; border-radius:10px; margin:12px 0; }
+        .math { background: rgba(15,23,42,0.85); padding:12px; border-radius:8px; margin:6px 0; text-align:center; font-size:1rem; border-left:4px solid var(--accent); }
 
-        .analysis-box {
-            padding: 25px;
-            border-radius: 16px;
-            margin-top: 25px;
-            border-left: 6px solid;
-            font-size: 1.1em;
-        }
-        .analysis-box.success { background: rgba(16,185,129,0.15); border-color: var(--success); }
-        .analysis-box.warning { background: rgba(245,158,11,0.15); border-color: var(--warning); }
-        .analysis-box.danger { background: rgba(239,68,68,0.15); border-color: var(--danger); }
+        .analysis-box { padding:12px; border-radius:8px; margin-top:12px; border-left:6px solid; font-size:0.95rem; }
+        .analysis-box.success { background: rgba(16,185,129,0.08); border-color: var(--success); }
+        .analysis-box.warning { background: rgba(245,158,11,0.08); border-color: var(--warning); }
+        .analysis-box.danger { background: rgba(239,68,68,0.08); border-color: var(--danger); }
 
-        canvas {
-            border-radius: 20px;
-            background: rgba(10,10,20,0.8);
-            padding: 20px;
-            margin: 20px 0;
-        }
+        .footer { text-align:center; padding:28px; color:var(--text2); margin-top:30px; border-top:1px solid var(--border); }
 
-        .footer {
-            text-align: center;
-            padding: 50px;
-            color: var(--text2);
-            border-top: 1px solid var(--border);
-            margin-top: 60px;
-        }
+        .hidden { display:none; }
 
-        /* ===== help button & modal ===== */
-        .help-btn {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: linear-gradient(135deg,var(--primary),var(--accent));
-          color: white;
-          border: none;
-          border-radius: 12px;
-          padding: 10px 14px;
-          font-weight: 700;
-          box-shadow: 0 8px 30px rgba(59,130,246,0.25);
-          cursor: pointer;
-          z-index: 1200;
-        }
-        #helpModal {
-          display: none;
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,0.75);
-          z-index: 1300;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-        }
-        #helpModal > .help-card {
-          width: 100%;
-          max-width: 820px;
-          background: var(--card);
-          padding: 26px;
-          border-radius: 16px;
-          border: 1px solid var(--border);
-        }
-        .help-title { color: var(--accent); font-size: 1.4em; margin-bottom: 8px; font-weight:700; }
-        .help-step { min-height: 140px; line-height:1.6; background: rgba(15,23,42,0.7); padding:16px; border-radius:10px; margin: 12px 0; }
-        .help-controls { display:flex; gap:10px; justify-content: flex-end; margin-top:8px; }
-        .help-controls .btn { padding:8px 12px; border-radius:10px; font-size:0.95em; }
-        .help-step-index { font-size:0.95em; color:var(--text2); margin-top:6px; }
-
-        #csvModal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.95);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-        }
-        #csvModal > div {
-            background: var(--card);
-            padding: 40px;
-            border-radius: 24px;
-            width: 90%;
-            max-width: 700px;
-            position: relative;
-        }
-        #csvInput {
-            width: 100%;
-            height: 300px;
-            background: #0f172a;
-            color: white;
-            padding: 20px;
-            border-radius: 16px;
-            font-family: 'Courier New', monospace;
-        }
-
-        /* responsive kecil */
-        @media (max-width:700px){
-          .help-btn { right: 12px; padding:8px 10px; top:12px; }
-          .help-controls { flex-direction: column-reverse; align-items:flex-end; }
+        /* responsive */
+        @media (max-width:900px) {
+            .side-nav { left:10px; top:10px; }
+            .header-inner { padding:10px 14px; }
+            .container { padding-top:10px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1 class="title">Analisis Efisiensi Charger HP</h1>
-            <p class="subtitle">Turunan Numerik dSoC/dt (%/menit)</p>
-            <div class="badge">PROYEK AKHIR • KALKULUS DIFERENSIAL</div>
-            <p style="margin-top:15px; color:#e0e7ff;">Kelompok 2</p>
-        </header>
-
-        <!-- 1. Input Data -->
-        <div class="card">
-            <h2>Input Data Percobaan</h2>
-            <table id="dataTable">
-                <thead><tr><th>Waktu (menit)</th><th>SoC (%)</th><th>Aksi</th></tr></thead>
-                <tbody>
-                    <!-- Tabel dimulai KOSONG -->
-                </tbody>
-            </table>
-            <button class="btn" id="addRow">+ Tambah Baris</button>
-            <button class="btn" id="resetTable">Reset Tabel</button>
-            <button class="btn" id="pasteCSV">Tempel dari CSV</button>
-            <p style="margin-top:15px; color:var(--text2); font-size:0.95em;">
-                Tips: Klik "Tambah Baris" untuk memulai pengisian data
-            </p>
-        </div>
-
-        <!-- 2. Teori -->
-        <div class="card">
-            <h2>Teori Turunan Numerik</h2>
-            <div class="formula-box">
-                <div class="math">\[ \frac{d\text{SoC}}{dt} = \lim_{\Delta t \to 0} \frac{\Delta \text{SoC}(t + \Delta t) - \text{SoC}(t)}{\Delta t} \]</div>
-                <div class="math">\[ \text{Forward (i=0)}: \quad \frac{\text{SoC}_1 - \text{SoC}_0}{t_1 - t_0} \]</div>
-                <div class="math">\[ \text{Backward (i=n)}: \quad \frac{\text{SoC}_n - \text{SoC}_{n-1}}{t_n - t_{n-1}} \]</div>
-                <div class="math">\[ \text{Central (i=1..n-1)}: \quad \frac{\text{SoC}_{i+1} - \text{SoC}_{i-1}}{t_{i+1} - t_{i-1}} \]</div>
-                <div class="math">\[ \text{Skor Efisiensi} = \min(100,\ 10 \times |\overline{\frac{d\text{SoC}}{dt}}|) \]</div>
-            </div>
-
-            <h3>Langkah Perhitungan Detail</h3>
-            <div id="stepByStep" style="background:rgba(15,23,42,0.7); padding:25px; border-radius:16px; line-height:2.2;"></div>
-        </div>
-
-        <!-- 3. Hasil + Analisis -->
-        <div class="card">
-            <h2>Hasil Perhitungan</h2>
-            <div id="calculationResults" style="text-align:center; font-size:2.3em; padding:40px; background:linear-gradient(135deg,var(--primary),var(--accent)); border-radius:20px; color:white;"></div>
-
-            <h3>Analisis Efisiensi Charger</h3>
-            <div id="analysisBox" class="analysis-box" style="display:none;"></div>
-        </div>
-
-        <!-- 4. Grafik -->
-        <div class="card">
-            <h2>Grafik Interaktif</h2>
-            <canvas id="socChart"></canvas>
-            <canvas id="dsocdtChart"></canvas>
-        </div>
-
-        <!-- 5. Leaderboard -->
-        <div class="card">
-            <h2>Upload ke Leaderboard Publik</h2>
-            <input type="text" id="merkCharger" placeholder="Merk & tipe charger" style="margin:10px 0;">
-            <input type="text" id="hpModel" placeholder="Model HP">
-            <button class="btn btn-success" id="uploadPublic">Upload Hasil</button>
-        </div>
-
-        <div class="card">
-            <h2>Leaderboard Publik</h2>
-            <div id="publicFeed"></div>
-        </div>
-
-        <!-- 6. Ekspor -->
-        <div class="card">
-            <h2>Ekspor</h2>
-            <button class="btn" id="exportCSV" style="width:48%;">CSV</button>
-            <button class="btn" id="exportHTML" style="width:48%;">Laporan HTML</button>
-        </div>
+    <!-- SIDE NAV fixed kiri atas -->
+    <div class="side-nav" role="navigation" aria-label="Menu utama">
+        <button class="nav-btn active" id="navHome" data-page="home">Beranda</button>
+        <button class="nav-btn" id="navUploads" data-page="uploads">Unggahan</button>
+        <button class="nav-btn" id="navTutorial" data-page="tutorial">Tutorial</button>
     </div>
 
-    <!-- TOMBOL BANTUAN -->
-    <button class="help-btn" id="openHelp">Bantuan • Tutorial</button>
-
-    <!-- MODAL BANTUAN -->
-    <div id="helpModal" role="dialog" aria-modal="true" aria-hidden="true">
-      <div class="help-card" role="document">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
+    <!-- HEADER centered top (bukan fixed) -->
+    <header>
+      <div class="header-inner" role="banner">
+        <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
           <div>
-            <div class="help-title">Panduan Penggunaan Website</div>
-            <div style="color:var(--text2);font-size:0.95em;">Langkah demi langkah untuk mengisi data dan mengunggah leaderboard</div>
+            <div class="title">Analisis Efisiensi Charger HP</div>
+            <div class="subtitle">Turunan Numerik dSoC/dt (%/menit) — 2025</div>
           </div>
-          <button id="closeHelp" style="background:none;border:none;color:var(--text);font-size:26px;cursor:pointer;">×</button>
-        </div>
-
-        <div id="helpContent" class="help-step"></div>
-        <div class="help-step-index" id="helpIndex"></div>
-
-        <div class="help-controls">
-          <button class="btn" id="helpPrev">Sebelumnya</button>
-          <button class="btn" id="helpNext">Berikutnya</button>
-          <button class="btn btn-success" id="helpGotIt">Selesai</button>
+          <div class="badge">PROYEK AKHIR</div>
         </div>
       </div>
-    </div>
+    </header>
 
-    <!-- Modal CSV -->
-    <div id="csvModal">
-        <div>
-            <h2 style="color:var(--accent);">Tempel CSV</h2>
-            <textarea id="csvInput" placeholder="0,5\n10,38\n20,72\n30,95"></textarea>
-            <button class="btn" id="submitCSV" style="width:100%; margin-top:20px;">Submit</button>
-            <button id="closeModal" style="position:absolute; top:15px; right:25px; background:none; border:none; color:white; font-size:32px; cursor:pointer;">×</button>
+    <div class="container">
+        <!-- PAGE: BERANDA -->
+        <main id="page-home">
+            <!-- 0. Input merk HP & merk charger di atas -->
+            <div class="card">
+                <h2>Informasi Identitas (untuk upload)</h2>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:200px;">
+                        <label for="hpModelTop" style="color:var(--text2);margin-bottom:6px;display:block;">Merk & Model HP</label>
+                        <input id="hpModelTop" type="text" placeholder="Contoh: Samsung A19">
+                    </div>
+                    <div style="flex:1;min-width:200px;">
+                        <label for="merkChargerTop" style="color:var(--text2);margin-bottom:6px;display:block;">Merk & Tipe Charger</label>
+                        <input id="merkChargerTop" type="text" placeholder="Contoh: Xiaomi 120W">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1. Input Data -->
+            <div class="card">
+                <h2>Input Data Percobaan</h2>
+                <table id="dataTable">
+                    <thead><tr><th>Waktu (menit)</th><th>SoC (%)</th><th>Aksi</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+                    <button class="btn" id="addRow">+ Tambah Baris</button>
+                    <button class="btn" id="resetTable">Reset Tabel</button>
+                </div>
+                <p style="margin-top:10px;color:var(--text2)">Tips: Klik "Tambah Baris" untuk memulai pengisian data</p>
+            </div>
+
+            <!-- 2. Teori -->
+            <div class="card">
+                <h2>Teori Turunan Numerik</h2>
+                <div class="formula-box">
+                    <div class="math">\[ \frac{d\text{SoC}}{dt} = \lim_{\Delta t \to 0} \frac{\Delta \text{SoC}(t + \Delta t) - \text{SoC}(t)}{\Delta t} \]</div>
+                    <div class="math">\[ \text{Forward (simple)}: \quad \frac{\text{SoC}_1 - \text{SoC}_0}{t_1 - t_0} \quad (O(h)) \]</div>
+                    <div class="math">\[ \text{Central (three-point)}: \quad \frac{\text{SoC}_{i+1} - \text{SoC}_{i-1}}{2h} \quad (O(h^2)) \]</div>
+                    <div class="math">\[ \text{Three-point endpoint (left)}: \quad \frac{-3\text{SoC}_0 + 4\text{SoC}_1 - \text{SoC}_2}{2h} \quad (O(h^2)) \]</div>
+                    <div class="math">\[ \text{Skor Efisiensi} = \min(100,\ 10 \times |\overline{\frac{d\text{SoC}}{dt}}|) \]</div>
+                </div>
+
+                <h3>Langkah Perhitungan Detail</h3>
+                <div id="stepByStep" style="background:rgba(15,23,42,0.7); padding:16px; border-radius:8px; line-height:1.8;"></div>
+
+                <p style="margin-top:10px; color:var(--text2); font-size:0.9em;">
+                    Sumber rumus diferensiasi numerik: Burden & Faires, <em>Numerical Analysis</em>, Chapter 4.
+                </p>
+            </div>
+
+            <!-- 3. Hasil + Analisis -->
+            <div class="card">
+                <h2>Hasil Perhitungan</h2>
+                <div id="calculationResults" style="text-align:center; font-size:1.8rem; padding:18px; background:linear-gradient(135deg,var(--primary),var(--accent)); border-radius:10px; color:white;"></div>
+
+                <h3>Analisis Efisiensi Charger</h3>
+                <div id="analysisBox" class="analysis-box" style="display:none;"></div>
+            </div>
+
+            <!-- 4. Grafik -->
+            <div class="card">
+                <h2>Grafik Interaktif</h2>
+                <canvas id="socChart"></canvas>
+                <canvas id="dsocdtChart"></canvas>
+            </div>
+
+            <!-- 5. Upload Hasil (TANPA input merk & hp di sini) -->
+            <div class="card">
+                <h2>Upload Hasil</h2>
+                <p style="margin-bottom:12px;color:var(--text2);">Upload data Anda sehingga orang lain dapat melihatnya.</p>
+                <div>
+                    <button class="btn btn-success" id="uploadPublic">Upload Hasil</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- PAGE: UNGGAHAN (daftar + pencarian) -->
+        <main id="page-uploads" class="hidden">
+            <div class="card">
+                <h2>Unggahan Publik</h2>
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+                    <input id="searchUploads" placeholder="Cari merk charger atau model HP">
+                    <button class="btn" id="reloadUploads">Muat Ulang</button>
+                </div>
+                <div id="uploadsList" style="color:var(--text2)">Memuat daftar unggahan...</div>
+            </div>
+        </main>
+
+        <!-- PAGE: TUTORIAL -->
+        <main id="page-tutorial" class="hidden">
+            <div class="card">
+                <h2>Tutorial & Panduan Lengkap</h2>
+                <div style="color:var(--text2);line-height:1.8;">
+                    <ol>
+                        <li><strong>Informasi Identitas</strong><br>Isi <em>Merk & Model HP</em> dan <em>Merk & Tipe Charger</em> pada bagian "Informasi Identitas" di Beranda jika ingin mengunggah hasil.</li>
+                        <li><strong>Input Data</strong><br>Tambahkan baris pada bagian input data dan isi waktu (menit) serta SoC (%).</li>
+                        <li><strong>Hitung</strong><br>Perhitungan dSoC/dt akan menampilkan langkah perhitungan numerik dan hasil rata-rata serta skor.</li>
+                        <li><strong>Grafik</strong><br>Grafik SoC & dSoC/dt muncul untuk membantu analisis visual.</li>
+                        <li><strong>Upload</strong><br>Gunakan tombol <em>Upload Hasil</em> di Beranda untuk membagikan hasil ke leaderboard publik.</li>
+                        <li><strong>Unggahan</strong><br>Di halaman Unggahan Anda dapat mencari merk/HP yang sudah diunggah orang lain.</li>
+                    </ol>
+                </div>
+            </div>
+        </main>
+
+        <div class="footer">
+            <p>2025 Kelompok 2 • Kalkulus Diferensial</p>
+            <p>Dibuat hanya untuk tugas kuliah</p>
         </div>
     </div>
 
-    <div class="footer">
-        <p> 2025 Kelompok 2 • Kalkulus Diferensial</p>
-        <p>Dibuat hanya untuk tugas kuliah</p>
-    </div>
-
-    <!-- REPLACE: Realtime Database (REST) - gunakan URL project Anda -->
     <script>
-      // Ganti DB_URL jika perlu; saat ini memakai URL yang Anda berikan:
+      // Ganti DB_URL bila perlu
       const DB_URL = "https://analisis-efisiensi-charger-default-rtdb.asia-southeast1.firebasedatabase.app";
 
       function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-      // Upload ke Realtime Database (POST -> new child)
+      // ====== NAVIGATION (single-page) ======
+      const navHome = document.getElementById('navHome');
+      const navUploads = document.getElementById('navUploads');
+      const navTutorial = document.getElementById('navTutorial');
+      const pageHome = document.getElementById('page-home');
+      const pageUploads = document.getElementById('page-uploads');
+      const pageTutorial = document.getElementById('page-tutorial');
+
+      function showPage(page){
+        // remove active from all
+        [navHome, navUploads, navTutorial].forEach(b=>b.classList.remove('active'));
+        // hide all
+        pageHome.classList.add('hidden');
+        pageUploads.classList.add('hidden');
+        pageTutorial.classList.add('hidden');
+
+        if (page === 'home') {
+          navHome.classList.add('active');
+          pageHome.classList.remove('hidden');
+        } else if (page === 'uploads') {
+          navUploads.classList.add('active');
+          pageUploads.classList.remove('hidden');
+          loadUploads(); // refresh when opening
+        } else if (page === 'tutorial') {
+          navTutorial.classList.add('active');
+          pageTutorial.classList.remove('hidden');
+        }
+      }
+      navHome.addEventListener('click', ()=> showPage('home'));
+      navUploads.addEventListener('click', ()=> showPage('uploads'));
+      navTutorial.addEventListener('click', ()=> showPage('tutorial'));
+
+      // ====== Realtime DB helpers ======
+      async function fetchLeaderboard(){
+        try {
+          const res = await fetch(DB_URL + "/leaderboard.json");
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const data = await res.json();
+          if (!data) return [];
+          return Object.keys(data).map(k => ({ id:k, ...data[k] }))
+                       .sort((a,b) => new Date(b.waktu) - new Date(a.waktu));
+        } catch (err) {
+          console.error("fetchLeaderboard error:", err);
+          return null;
+        }
+      }
+
+      // Upload function
       window.uploadToFirestore = async function(merk, hp, avg, skor) {
         try {
           const payload = {
@@ -393,335 +370,234 @@
           }
 
           alert("Berhasil upload ke leaderboard publik!");
-          if (typeof window.loadFirestoreLeaderboard === "function") window.loadFirestoreLeaderboard();
-
+          // update uploads list if visible
+          if (!pageUploads.classList.contains('hidden')) loadUploads();
         } catch (err) {
           console.error("uploadToRTDB error:", err);
           alert("Gagal upload: " + (err.message || err));
         }
       };
 
-      // Load leaderboard dari Realtime DB
-      window.loadFirestoreLeaderboard = async function() {
-        try {
-          const res = await fetch(DB_URL + "/leaderboard.json");
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          const data = await res.json();
-          if (!data) {
-            document.getElementById("publicFeed").innerHTML = "<p>Belum ada data</p>";
-            return;
-          }
-
-          const rows = Object.keys(data).map(k => ({ id: k, ...data[k] }))
-                        .sort((a,b) => new Date(b.waktu) - new Date(a.waktu));
-
-          let html = `<table><thead><tr><th>Charger</th><th>HP</th><th>dSoC/dt</th><th>Skor</th><th>Waktu</th></tr></thead><tbody>`;
-          rows.forEach(d => {
-            html += `<tr>
-                      <td>${escapeHtml(d.merk||'')}</td>
-                      <td>${escapeHtml(d.hp||'')}</td>
-                      <td>${((d.avg||0)).toFixed(3)}</td>
-                      <td>${((d.skor||0)).toFixed(1)}</td>
-                      <td>${new Date(d.waktu).toLocaleString("id-ID")}</td>
-                     </tr>`;
-          });
-          html += "</tbody></table>";
-          document.getElementById("publicFeed").innerHTML = html;
-        } catch (err) {
-          console.error("loadRTDB error:", err);
-          document.getElementById("publicFeed").innerHTML = "<p>Gagal memuat leaderboard.</p>";
+      // ====== Load uploads page list with optional filter ======
+      async function loadUploads(filter=''){
+        const container = document.getElementById('uploadsList');
+        container.textContent = 'Memuat daftar unggahan...';
+        const rows = await fetchLeaderboard();
+        if (rows === null) { container.textContent = 'Gagal memuat daftar unggahan.'; return; }
+        if (!rows.length) { container.textContent = 'Belum ada unggahan.'; return; }
+        const q = (filter||'').toLowerCase().trim();
+        const filtered = rows.filter(r => {
+          if (!q) return true;
+          return (r.merk||'').toLowerCase().includes(q) || (r.hp||'').toLowerCase().includes(q);
+        });
+        if (!filtered.length) {
+          container.innerHTML = `<div style="color:var(--text2)">Tidak ditemukan untuk: "${escapeHtml(filter)}"</div>`;
+          return;
         }
-      };
+        let html = '';
+        filtered.forEach(r=>{
+          html += `<div style="padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                      <div style="font-weight:700">${escapeHtml(r.merk)}</div>
+                      <div style="color:var(--text2)">${escapeHtml(r.hp)} — ${parseFloat(r.avg).toFixed(3)} %/menit (Skor ${parseFloat(r.skor).toFixed(1)})</div>
+                    </div>
+                    <div style="color:var(--text2);font-size:0.85rem">${new Date(r.waktu).toLocaleString('id-ID')}</div>
+                   </div>`;
+        });
+        html += `<div style="color:var(--text2);margin-top:8px">Menampilkan ${filtered.length} hasil.</div>`;
+        container.innerHTML = html;
+      }
 
-      window.addEventListener("load", () => { setTimeout(()=>{ if (document.getElementById('publicFeed')) window.loadFirestoreLeaderboard(); }, 150); });
-    </script>
+      document.getElementById('reloadUploads').addEventListener('click', ()=> loadUploads(document.getElementById('searchUploads').value));
+      document.getElementById('searchUploads').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') loadUploads(e.target.value); });
 
-    <!-- SCRIPT LOGIKA APLIKASI UTAMA + help modal script -->
-    <script>
-        const tbody = document.querySelector('#dataTable tbody');
-        const addRow = document.getElementById('addRow');
-        const reset = document.getElementById('resetTable');
-        const paste = document.getElementById('pasteCSV');
-        const modal = document.getElementById('csvModal');
-        const closeModal = document.getElementById('closeModal');
-        const submitCSV = document.getElementById('submitCSV');
-        const csvInput = document.getElementById('csvInput');
-        const stepByStep = document.getElementById('stepByStep');
+      // ====== Table input logic (kept) ======
+      const tbody = document.querySelector('#dataTable tbody');
+      function attachDelete() {
+          document.querySelectorAll('.btn-danger').forEach(btn => {
+              btn.onclick = () => {
+                  if (tbody.children.length > 1) {
+                      btn.closest('tr').remove();
+                      calc();
+                  } else {
+                      alert("Minimal 1 baris data!");
+                  }
+              };
+          });
+      }
+      function initEmptyRow() {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td><input type="number" step="0.1" min="0" placeholder="0"></td>
+                          <td><input type="number" min="0" max="100" placeholder="10"></td>
+                          <td><button class="btn btn-danger">Hapus</button></td>`;
+          tbody.appendChild(tr);
+          attachDelete();
+      }
+      initEmptyRow();
+
+      document.getElementById('addRow').addEventListener('click', ()=> { initEmptyRow(); });
+      document.getElementById('resetTable').addEventListener('click', ()=> { tbody.innerHTML=''; initEmptyRow(); calc(); });
+
+      function getData() {
+          const data = [];
+          tbody.querySelectorAll('tr').forEach(row => {
+              const t = parseFloat(row.querySelectorAll('input')[0].value);
+              const soc = parseFloat(row.querySelectorAll('input')[1].value);
+              if (!isNaN(t) && !isNaN(soc)) data.push({t, soc});
+          });
+          return data.sort((a,b)=>a.t-b.t);
+      }
+
+      // ====== Calculation (kept) ======
+      let chartSoc, chartRate, avgRateGlobal = 0;
+      function approxEqual(a,b){ return Math.abs(a-b) < 1e-6; }
+      function lagrangeDerivativeAt(x0, x1, x2, f0, f1, f2, xEval){
+        const L0p = (2*xEval - x1 - x2) / ((x0 - x1)*(x0 - x2));
+        const L1p = (2*xEval - x0 - x2) / ((x1 - x0)*(x1 - x2));
+        const L2p = (2*xEval - x0 - x1) / ((x2 - x0)*(x2 - x1));
+        return f0*L0p + f1*L1p + f2*L2p;
+      }
+
+      function calc() {
+        const data = getData();
         const results = document.getElementById('calculationResults');
+        const stepByStep = document.getElementById('stepByStep');
         const analysisBox = document.getElementById('analysisBox');
-        const merkInput = document.getElementById('merkCharger');
-        const hpInput = document.getElementById('hpModel');
-        let chartSoc, chartRate, avgRateGlobal = 0;
 
-        // Mulai dengan 1 baris kosong
-        function initEmptyRow() {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td><input type="number" step="0.1" min="0" placeholder="0"></td>
-                            <td><input type="number" min="0" max="100" placeholder="10"></td>
-                            <td><button class="btn btn-danger">Hapus</button></td>`;
-            tbody.appendChild(tr);
-            attachDelete();
-        }
-        initEmptyRow();
-
-        addRow.onclick = () => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td><input type="number" step="0.1" min="0"></td>
-                            <td><input type="number" min="0" max="100"></td>
-                            <td><button class="btn btn-danger">Hapus</button></td>`;
-            tbody.appendChild(tr);
-            attachDelete();
-        };
-
-        function attachDelete() {
-            document.querySelectorAll('.btn-danger').forEach(btn => {
-                btn.onclick = () => {
-                    if (tbody.children.length > 1) {
-                        btn.closest('tr').remove();
-                        calc();
-                    } else {
-                        alert("Minimal 1 baris data!");
-                    }
-                };
-            });
+        if (data.length < 2) {
+            results.innerHTML = '<p style="color:#94a3b8;">Masukkan minimal 2 titik data</p>';
+            stepByStep.innerHTML = '';
+            analysisBox.style.display = 'none';
+            return;
         }
 
-        // tombol reset tabel
-        reset.onclick = () => {
-            tbody.innerHTML = '';
-            initEmptyRow();
-            calc();
-        };
+        function x(idx){ return data[idx].t; }
+        function y(idx){ return data[idx].soc; }
 
-        // CSV Modal
-        paste.onclick = () => modal.style.display = 'flex';
-        closeModal.onclick = () => modal.style.display = 'none';
-        submitCSV.onclick = () => {
-            tbody.innerHTML = '';
-            csvInput.value.trim().split('\n').forEach(line => {
-                const [t, soc] = line.split(',').map(x => parseFloat(x));
-                if (!isNaN(t) && !isNaN(soc)) {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td><input type="number" step="0.1" value="${t}"></td>
-                                    <td><input type="number" value="${soc}"></td>
-                                    <td><button class="btn btn-danger">Hapus</button></td>`;
-                    tbody.appendChild(tr);
-                }
-            });
-            attachDelete();
-            modal.style.display = 'none';
-            calc();
-        };
+        const rates = [];
+        const stepObjects = [];
+        const n = data.length - 1;
 
-        function getData() {
-            const data = [];
-            tbody.querySelectorAll('tr').forEach(row => {
-                const t = parseFloat(row.querySelectorAll('input')[0].value);
-                const soc = parseFloat(row.querySelectorAll('input')[1].value);
-                if (!isNaN(t) && !isNaN(soc)) data.push({t, soc});
-            });
-            return data.sort((a,b)=>a.t-b.t);
-        }
-
-        /* =========================
-           PERUBAHAN TERBATAS DI SINI:
-           hanya ubah cara menampilkan "Langkah Perhitungan Detail"
-           supaya rumus rapi dan mudah dibaca (blok LaTeX + interpretasi).
-           ========================= */
-        function calc() {
-            const data = getData();
-            if (data.length < 2) {
-                results.innerHTML = '<p style="color:#94a3b8;">Masukkan minimal 2 titik data</p>';
-                stepByStep.innerHTML = '';
-                analysisBox.style.display = 'none';
-                return;
-            }
-
-            const rates = [];
-            const stepObjects = [];
-
-            for (let i = 0; i < data.length; i++) {
-                let rate;
-                if (i === 0) {
-                    // Forward
-                    const dt = (data[1].t - data[0].t) || 1;
-                    rate = (data[1].soc - data[0].soc) / dt;
-                    const latex = `\\displaystyle \\frac{ ${data[1].soc} - ${data[0].soc} }{ ${data[1].t} - ${data[0].t} } = ${rate.toFixed(4)}`;
-                    stepObjects.push({method: 'Forward (i = 0)', latex, interp: `${rate.toFixed(4)} %/menit`});
-                } else if (i === data.length - 1) {
-                    // Backward
-                    const dt = (data[i].t - data[i-1].t) || 1;
-                    rate = (data[i].soc - data[i-1].soc) / dt;
-                    const latex = `\\displaystyle \\frac{ ${data[i].soc} - ${data[i-1].soc} }{ ${data[i].t} - ${data[i-1].t} } = ${rate.toFixed(4)}`;
-                    stepObjects.push({method: `Backward (i = ${i})`, latex, interp: `${rate.toFixed(4)} %/menit`});
+        for (let i = 0; i <= n; i++){
+            let rate = 0;
+            if (i > 0 && i < n) {
+                const h1 = x(i) - x(i-1);
+                const h2 = x(i+1) - x(i);
+                if (approxEqual(h1, h2)) {
+                    const h = (h1 + h2)/2;
+                    rate = (y(i+1) - y(i-1)) / (2 * h);
+                    stepObjects.push({method: `Central (three-point) i=${i}`, latex: `\\displaystyle \\frac{ ${y(i+1)} - ${y(i-1)} }{ ${2*h} } = ${rate.toFixed(4)}`, interp: `${rate.toFixed(4)} %/menit`});
                 } else {
-                    // Central
-                    const dt = (data[i+1].t - data[i-1].t) || 1;
-                    rate = (data[i+1].soc - data[i-1].soc) / dt;
-                    const latex = `\\displaystyle \\frac{ ${data[i+1].soc} - ${data[i-1].soc} }{ ${data[i+1].t} - ${data[i-1].t} } = ${rate.toFixed(4)}`;
-                    stepObjects.push({method: `Central (i = ${i})`, latex, interp: `${rate.toFixed(4)} %/menit`});
+                    rate = lagrangeDerivativeAt(x(i-1), x(i), x(i+1), y(i-1), y(i), y(i+1), x(i));
+                    stepObjects.push({method: `Central (Lagrange) i=${i}`, latex: `\\displaystyle f'(${x(i)}) \\approx ${rate.toFixed(4)}`, interp: `${rate.toFixed(4)} %/menit`});
                 }
-                rates.push(rate);
+            } else if (i === 0) {
+                if (data.length >= 3) {
+                    const h01 = x(1) - x(0);
+                    const h12 = x(2) - x(1);
+                    if (approxEqual(h01, h12)) {
+                        const h = h01;
+                        rate = (-3*y(0) + 4*y(1) - y(2)) / (2 * h);
+                        stepObjects.push({method: `Left endpoint (three-point) i=0`, latex: `\\displaystyle \\frac{-3\\cdot ${y(0)} + 4\\cdot ${y(1)} - ${y(2)}}{ ${2*h} } = ${rate.toFixed(4)}`, interp: `${rate.toFixed(4)} %/menit`});
+                    } else {
+                        rate = lagrangeDerivativeAt(x(0), x(1), x(2), y(0), y(1), y(2), x(0));
+                        stepObjects.push({method: `Left endpoint (Lagrange) i=0`, latex: `\\displaystyle f'(${x(0)}) \\approx ${rate.toFixed(4)}`, interp: `${rate.toFixed(4)} %/menit`});
+                    }
+                } else {
+                    const dt = x(1) - x(0) || 1;
+                    rate = (y(1) - y(0)) / dt;
+                    stepObjects.push({method: `Left endpoint (forward simple) i=0`, latex: `\\displaystyle \\frac{ ${y(1)} - ${y(0)} }{ ${dt} } = ${rate.toFixed(4)}`, interp: `${rate.toFixed(4)} %/menit`});
+                }
+            } else if (i === n) {
+                if (data.length >= 3) {
+                    const h_nm1 = x(n) - x(n-1);
+                    const h_nm2 = x(n-1) - x(n-2);
+                    if (approxEqual(h_nm1, h_nm2)) {
+                        const h = h_nm1;
+                        rate = (y(n-2) - 4*y(n-1) + 3*y(n)) / (2 * h);
+                        stepObjects.push({method: `Right endpoint (three-point) i=${n}`, latex: `\\displaystyle \\frac{ ${y(n-2)} - 4\\cdot ${y(n-1)} + 3\\cdot ${y(n)} }{ ${2*h} } = ${rate.toFixed(4)}`, interp: `${rate.toFixed(4)} %/menit`});
+                    } else {
+                        rate = lagrangeDerivativeAt(x(n-2), x(n-1), x(n), y(n-2), y(n-1), y(n), x(n));
+                        stepObjects.push({method: `Right endpoint (Lagrange) i=${n}`, latex: `\\displaystyle f'(${x(n)}) \\approx ${rate.toFixed(4)}`, interp: `${rate.toFixed(4)} %/menit`});
+                    }
+                } else {
+                    const dt = x(n) - x(n-1) || 1;
+                    rate = (y(n) - y(n-1)) / dt;
+                    stepObjects.push({method: `Right endpoint (backward simple) i=${n}`, latex: `\\displaystyle \\frac{ ${y(n)} - ${y(n-1)} }{ ${dt} } = ${rate.toFixed(4)}`, interp: `${rate.toFixed(4)} %/menit`});
+                }
             }
-
-            // ringkasan hasil
-            avgRateGlobal = rates.reduce((a,b)=>a+b,0)/rates.length;
-            const skor = Math.min(100, Math.abs(avgRateGlobal)*10).toFixed(1);
-
-            results.innerHTML = `
-                <div style="font-size:2.8em; font-weight:800;">${avgRateGlobal.toFixed(3)} %/menit</div>
-                <div style="margin-top:15px; font-size:1.4em;">Skor: <strong style="color:#fbbf24;">${skor}/100</strong></div>
-            `;
-
-            // Build HTML rapi untuk stepByStep:
-            // - setiap langkah menampilkan judul metode, blok LaTeX, dan interpretasi
-            let html = '<ol style="font-size:1.05em; margin-left:18px;">';
-            stepObjects.forEach(obj => {
-                html += `<li style="margin:12px 0; padding:12px; border-radius:10px; background:rgba(255,255,255,0.02)">
-                           <div style="font-weight:700; color:var(--text); margin-bottom:8px;">${escapeHtml(obj.method)}</div>
-                           <div style="background:rgba(0,0,0,0.25); padding:10px; border-radius:8px; margin-bottom:8px;">\\[ ${obj.latex} \\]</div>
-                           <div style="color:var(--text2);">Interpretasi: <strong style="color:var(--text);">${escapeHtml(obj.interp)}</strong></div>
-                         </li>`;
-            });
-            html += '</ol>';
-            stepByStep.innerHTML = html;
-
-            // minta MathJax merender rumus
-            if (window.MathJax && MathJax.typesetPromise) {
-                MathJax.typesetPromise().catch((err)=>console.log('MathJax render error:', err));
-            }
-
-            // Analisis (sama seperti sebelumnya)
-            let analysisHTML = '', analysisClass = '';
-            const abs = Math.abs(avgRateGlobal);
-            if (abs > 3) {
-                analysisHTML = `Sangat Efektif! Charger ini termasuk kelas 100W+ (contoh: Xiaomi 120W, OnePlus Warp).`;
-                analysisClass = 'success';
-            } else if (abs >= 1.5) {
-                analysisHTML = `Efektif & Normal. Setara charger 25-65W (Samsung, iPhone Fast Charging).`;
-                analysisClass = 'success';
-            } else if (abs >= 0.5) {
-                analysisHTML = `Kurang Efektif. Hanya setara charger lama 5-15W. Pertimbangkan upgrade.`;
-                analysisClass = 'warning';
-            } else {
-                analysisHTML = `Sangat Lambat! Kemungkinan kabel rusak atau charger tidak kompatibel.`;
-                analysisClass = 'danger';
-            }
-            analysisBox.innerHTML = `<strong style="font-size:1.2em;">${analysisHTML}</strong>`;
-            analysisBox.className = `analysis-box ${analysisClass}`;
-            analysisBox.style.display = 'block';
-
-            // Grafik update
-            const labels = data.map(d => d.t);
-            [chartSoc, chartRate].forEach(c => c?.destroy());
-            chartSoc = new Chart(document.getElementById('socChart'), { type: 'line', data: { labels, datasets: [{ label: 'SoC (%)', data: data.map(d=>d.soc), borderColor: '#60a5fa', tension: 0.4, fill: true }] }, options: { responsive: true } });
-            chartRate = new Chart(document.getElementById('dsocdtChart'), { type: 'line', data: { labels, datasets: [{ label: 'dSoC/dt', data: rates, borderColor: '#f59e0b', tension: 0.4, fill: true }] }, options: { responsive: true } });
+            rates.push(rate);
         }
-        /* =========================
-           END perubahan (hanya bagian perhitungan detail).
-           ========================= */
 
-        // Ekspor
-        document.getElementById('exportCSV').onclick = () => download("Waktu,SoC\n"+getData().map(d=>`${d.t},${d.soc}`).join("\n"), "data.csv", "text/csv");
-        document.getElementById('exportHTML').onclick = () => {
-            const html = `<h1>Laporan Kelompok 2</h1><p>dSoC/dt: ${avgRateGlobal.toFixed(3)} %/menit</p><table border="1">${getData().map(d=>`<tr><td>${d.t}</td><td>${d.soc}</td></tr>`).join('')}</table>`;
-            download(html, "laporan.html", "text/html");
-        };
-        function download(t,n,y){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:y}));a.download=n;a.click();}
+        avgRateGlobal = rates.reduce((a,b)=>a+b,0)/rates.length;
+        const skor = Math.min(100, Math.abs(avgRateGlobal)*10).toFixed(1);
 
-        // Leaderboard: kirim ke Realtime DB via REST
-        document.getElementById('uploadPublic').onclick = () => {
-            const merk = merkInput.value.trim();
-            const hp = hpInput.value.trim();
-            if (!merk || !hp) {
-                alert("Mohon isi merk & tipe charger serta model HP terlebih dahulu.");
-                return;
-            }
-            if (isNaN(avgRateGlobal)) {
-                alert("Silakan hitung dSoC/dt terlebih dahulu dengan mengisi data pengukuran.");
-                return;
-            }
-            const avg = avgRateGlobal.toFixed(3);
-            const skor = Math.min(100, Math.abs(avgRateGlobal)*10).toFixed(1);
+        results.innerHTML = `
+            <div style="font-size:1.6rem;font-weight:800;">${avgRateGlobal.toFixed(3)} %/menit</div>
+            <div style="margin-top:8px;">Skor: <strong style="color:#fbbf24;">${skor}/100</strong></div>
+        `;
 
-            if (typeof window.uploadToFirestore !== "function") {
-                alert("Leaderboard online belum dikonfigurasi (upload function belum tersedia).");
-                return;
-            }
-            window.uploadToFirestore(merk, hp, avg, skor);
-        };
+        // Build stepByStep HTML
+        let stepHtml = '<ol style="margin-left:18px;color:var(--text2)">';
+        stepObjects.forEach(obj => {
+            stepHtml += `<li style="margin:8px 0;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02)">
+                           <div style="font-weight:700">${escapeHtml(obj.method)}</div>
+                           <div style="margin-top:6px;background:rgba(0,0,0,0.25);padding:8px;border-radius:6px">\\[ ${obj.latex} \\]</div>
+                           <div style="margin-top:6px;color:var(--text2)">Interpretasi: <strong style="color:var(--text)">${escapeHtml(obj.interp)}</strong></div>
+                         </li>`;
+        });
+        stepHtml += '</ol>';
+        stepByStep.innerHTML = stepHtml;
 
-        tbody.addEventListener('input', calc);
+        if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise().catch(()=>{});
 
-        /* ===== Tutorial modal: langkah-langkah ===== */
-        (function(){
-          const steps = [
-            `<strong>Mulai</strong><br>Klik tombol <em>Tambah Baris</em> untuk membuat baris pengukuran (waktu, SoC).`,
-            `<strong>Isi Data</strong><br>Isi kolom Waktu (menit) dan SoC (%) pada setiap baris. Contoh: 0, 5  lalu 10, 38.`,
-            `<strong>Hitung Turunan Numerik</strong><br>Setelah data terisi, perhitungan dSoC/dt akan berjalan otomatis; lihat bagian "Hasil Perhitungan".`,
-            `<strong>Analisis</strong><br>Lihat kotak analisis untuk rekomendasi (Sangat Efektif / Kurang Efektif / dll.).`,
-            `<strong>Grafik</strong><br>Grafik SoC dan dSoC/dt akan muncul di bagian "Grafik Interaktif".`,
-            `<strong>Unggah ke Leaderboard</strong><br>Isi "Merk & tipe charger" dan "Model HP", lalu klik <em>Upload Hasil</em>. Pastikan koneksi ke database sudah aktif.`,
-            `<strong>Ekspor</strong><br>Gunakan tombol CSV atau Laporan HTML untuk men-download data percobaan Anda.`,
-            `<strong>Hapus Baris Data</strong><br>Gunakan tombol "Hapus" pada kolom Aksi untuk menghapus baris yang salah.`,
-            `<strong>Perhatian</strong><br>Jika leaderboard online belum aktif, pastikan konfigurasi Realtime DB benar di Firebase Console.`
-          ];
+        // Analysis
+        const abs = Math.abs(avgRateGlobal);
+        let analysisHTML = '', analysisClass = '';
+        if (abs > 3) { analysisHTML = 'Sangat Efektif! Charger ini termasuk kelas 100W+ (contoh: Xiaomi 120W).'; analysisClass = 'analysis-box success'; }
+        else if (abs >= 1.5) { analysisHTML = 'Efektif & Normal. Setara charger 25-65W.'; analysisClass = 'analysis-box success'; }
+        else if (abs >= 0.5) { analysisHTML = 'Kurang Efektif. Hanya setara charger lama 5-15W.'; analysisClass = 'analysis-box warning'; }
+        else { analysisHTML = 'Sangat Lambat! Kemungkinan kabel rusak atau charger tidak kompatibel.'; analysisClass = 'analysis-box danger'; }
 
-          let idx = 0;
-          const openHelp = document.getElementById('openHelp');
-          const helpModal = document.getElementById('helpModal');
-          const helpContent = document.getElementById('helpContent');
-          const helpIndex = document.getElementById('helpIndex');
-          const helpPrev = document.getElementById('helpPrev');
-          const helpNext = document.getElementById('helpNext');
-          const helpGotIt = document.getElementById('helpGotIt');
-          const closeHelp = document.getElementById('closeHelp');
+        const analysisEl = document.getElementById('analysisBox');
+        analysisEl.innerHTML = `<div class="${analysisClass}" style="padding:12px;border-radius:8px">${analysisHTML}</div>`;
+        analysisEl.style.display = 'block';
 
-          function render() {
-            helpContent.innerHTML = steps[idx];
-            helpIndex.textContent = `Langkah ${idx+1} dari ${steps.length}`;
-            helpPrev.disabled = (idx === 0);
-            helpNext.disabled = (idx === steps.length - 1);
-          }
+        // Update charts
+        const labels = data.map(d => d.t);
+        [chartSoc, chartRate].forEach(c => c?.destroy?.());
+        chartSoc = new Chart(document.getElementById('socChart'), { type: 'line', data: { labels, datasets: [{ label: 'SoC (%)', data: data.map(d=>d.soc), borderColor: '#60a5fa', tension: 0.4, fill: true }] }, options: { responsive: true } });
+        chartRate = new Chart(document.getElementById('dsocdtChart'), { type: 'line', data: { labels, datasets: [{ label: 'dSoC/dt', data: rates, borderColor: '#f59e0b', tension: 0.4, fill: true }] }, options: { responsive: true } });
+      }
 
-          openHelp.addEventListener('click', () => {
-            idx = 0;
-            render();
-            helpModal.style.display = 'flex';
-            helpModal.setAttribute('aria-hidden','false');
-          });
+      // Trigger calc on table input changes
+      tbody.addEventListener('input', calc);
 
-          helpPrev.addEventListener('click', ()=> {
-            if (idx>0) { idx--; render(); }
-          });
-          helpNext.addEventListener('click', ()=> {
-            if (idx<steps.length-1) { idx++; render(); }
-          });
-          helpGotIt.addEventListener('click', ()=> {
-            helpModal.style.display = 'none';
-            helpModal.setAttribute('aria-hidden','true');
-          });
-          closeHelp.addEventListener('click', ()=> {
-            helpModal.style.display = 'none';
-            helpModal.setAttribute('aria-hidden','true');
-          });
+      // ====== Upload button: uses TOP inputs only ======
+      document.getElementById('uploadPublic').addEventListener('click', async () => {
+        const merkTop = (document.getElementById('merkChargerTop')||{}).value || '';
+        const hpTop = (document.getElementById('hpModelTop')||{}).value || '';
+        if (!merkTop.trim() || !hpTop.trim()) {
+          alert('Mohon isi Merk & Model HP pada bagian atas (Informasi Identitas) sebelum upload.');
+          return;
+        }
+        if (!isFinite(avgRateGlobal) || isNaN(avgRateGlobal)) {
+          alert('Silakan hitung dSoC/dt terlebih dahulu (isi data dan jalankan perhitungan).');
+          return;
+        }
+        const avg = avgRateGlobal.toFixed(3);
+        const skor = Math.min(100, Math.abs(avgRateGlobal)*10).toFixed(1);
 
-          // tutup modal bila klik di luar kartu
-          helpModal.addEventListener('click', (e)=> {
-            if (e.target === helpModal) {
-              helpModal.style.display = 'none';
-              helpModal.setAttribute('aria-hidden','true');
-            }
-          });
+        // Call uploadToFirestore
+        if (typeof window.uploadToFirestore === 'function') {
+          window.uploadToFirestore(merkTop.trim(), hpTop.trim(), avg, skor);
+        } else {
+          alert('Fungsi upload belum tersedia.');
+        }
+      });
 
-          // keyboard: Esc tutup
-          document.addEventListener('keydown', (e)=> {
-            if (e.key === 'Escape' && helpModal.style.display === 'flex') {
-              helpModal.style.display = 'none';
-              helpModal.setAttribute('aria-hidden','true');
-            }
-          });
-        })();
+      // Initial page
+      showPage('home');
     </script>
 </body>
 </html>
