@@ -60,6 +60,7 @@
             cursor: pointer;
             font-weight:700;
             white-space:nowrap;
+            font-size: 0.9rem;
         }
         .side-nav .nav-btn.active {
             background: linear-gradient(135deg, var(--primary), var(--accent));
@@ -153,16 +154,135 @@
 
         .hidden { display:none; }
 
-        /* responsive */
-        @media (max-width:900px) {
-            .side-nav { left:10px; top:10px; }
-            .header-inner { padding:10px 14px; }
-            .container { padding-top:10px; }
+        /* =========================
+           RESPONSIVE: MOBILE & TABLET
+           ==========================*/
+        @media (max-width: 900px) {
+            body {
+                padding: 12px 8px;
+            }
+
+            .side-nav {
+                top: 8px;
+                left: 50%;
+                transform: translateX(-50%);
+                flex-direction: row;
+                padding: 6px 8px;
+                border-radius: 999px;
+                gap: 6px;
+                backdrop-filter: blur(20px);
+            }
+            .side-nav .nav-btn {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+
+            .container {
+                padding-top: 70px; /* beri ruang untuk nav fixed */
+            }
+
+            header {
+                margin-bottom: 14px;
+            }
+
+            .header-inner {
+                padding: 10px 14px;
+                max-width: 100%;
+            }
+
+            .header-inner > div {
+                flex-direction: column !important;
+                text-align: center;
+            }
+
+            .title {
+                font-size: 1.1rem;
+            }
+            .subtitle {
+                font-size: 0.8rem;
+            }
+
+            .badge {
+                margin-left: 0;
+                margin-top: 4px;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            /* Form identitas: jadi kolom */
+            .card div[style*="flex;gap:12px;flex-wrap:wrap;"] {
+                flex-direction: column !important;
+            }
+
+            /* Tabel di HP: font lebih kecil, bisa scroll horizontal */
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            th, td {
+                font-size: 0.85rem;
+                padding: 8px;
+            }
+
+            /* Input + tombol di HP */
+            input, select, textarea {
+                font-size: 0.9rem;
+                padding: 10px;
+            }
+            button {
+                font-size: 0.85rem;
+                padding: 8px 10px;
+            }
+
+            /* Grafik: beri jarak antar canvas */
+            canvas {
+                margin-bottom: 12px;
+            }
+
+            /* Baris unggahan di halaman Unggahan:
+               kartu disusun vertikal agar tidak sempit */
+            #uploadsList > div {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 8px !important;
+            }
+
+            #uploadsList > div > div:last-child {
+                text-align: left !important;
+                white-space: normal !important;
+            }
+
+            /* Input cari + tombol reload diunggahan jadi kolom */
+            #page-uploads .card > div[style*="align-items:center;margin-bottom:12px;"] {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+            #searchUploads {
+                margin-bottom: 6px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding-top: 80px;
+            }
+
+            .card {
+                border-radius: 14px;
+            }
+
+            .footer {
+                font-size: 0.8rem;
+                padding: 20px 12px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- SIDE NAV fixed kiri atas -->
+    <!-- SIDE NAV fixed kiri atas (di HP akan jadi bar atas) -->
     <div class="side-nav" role="navigation" aria-label="Menu utama">
         <button class="nav-btn active" id="navHome" data-page="home">Beranda</button>
         <button class="nav-btn" id="navUploads" data-page="uploads">Unggahan</button>
@@ -382,29 +502,142 @@
       async function loadUploads(filter=''){
         const container = document.getElementById('uploadsList');
         container.textContent = 'Memuat daftar unggahan...';
+
         const rows = await fetchLeaderboard();
-        if (rows === null) { container.textContent = 'Gagal memuat daftar unggahan.'; return; }
-        if (!rows.length) { container.textContent = 'Belum ada unggahan.'; return; }
+        if (rows === null) {
+          container.textContent = 'Gagal memuat daftar unggahan.';
+          return;
+        }
+        if (!rows.length) {
+          container.textContent = 'Belum ada unggahan.';
+          return;
+        }
+
         const q = (filter||'').toLowerCase().trim();
         const filtered = rows.filter(r => {
           if (!q) return true;
           return (r.merk||'').toLowerCase().includes(q) || (r.hp||'').toLowerCase().includes(q);
         });
+
         if (!filtered.length) {
           container.innerHTML = `<div style="color:var(--text2)">Tidak ditemukan untuk: "${escapeHtml(filter)}"</div>`;
           return;
         }
+
         let html = '';
-        filtered.forEach(r=>{
-          html += `<div style="padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
-                    <div>
-                      <div style="font-weight:700">${escapeHtml(r.merk)}</div>
-                      <div style="color:var(--text2)">${escapeHtml(r.hp)} — ${parseFloat(r.avg).toFixed(3)} %/menit (Skor ${parseFloat(r.skor).toFixed(1)})</div>
-                    </div>
-                    <div style="color:var(--text2);font-size:0.85rem">${new Date(r.waktu).toLocaleString('id-ID')}</div>
-                   </div>`;
+        filtered.forEach(r => {
+          const avgVal  = parseFloat(r.avg)  || 0;
+          const skorVal = parseFloat(r.skor) || 0;
+          const avgText  = avgVal.toFixed(3) + ' %/menit';
+          const skorText = skorVal.toFixed(1) + ' / 100';
+
+          // kategori + penjelasan singkat berdasarkan rata-rata dSoC/dt
+          const absAvg = Math.abs(avgVal);
+          let kategori = 'Sangat Lambat';
+          let kalimatKategori = 'Laju pengisian sangat kecil; kemungkinan ada kendala pada kabel, port, atau kompatibilitas charger dengan HP.';
+
+          if (absAvg > 3) {
+            kategori = 'Sangat Efektif (kelas 100W+)';
+            kalimatKategori = 'Laju pengisian sangat tinggi; umumnya hanya ditemui pada charger flagship berdaya besar (±100W atau lebih). Cocok untuk pengisian sangat cepat.';
+          } else if (absAvg >= 1.5) {
+            kategori = 'Efektif (±25–65W)';
+            kalimatKategori = 'Termasuk kategori fast charging yang nyaman untuk pemakaian harian. Waktu tunggu pengisian relatif singkat dan efisien.';
+          } else if (absAvg >= 0.5) {
+            kategori = 'Kurang Efektif (±5–15W)';
+            kalimatKategori = 'Masih dapat digunakan, tetapi laju pengisian tergolong lambat jika dibanding charger fast charging modern.';
+          }
+
+          // Perkiraan kasar waktu 0–100% (berdasarkan rata-rata)
+          let estimasiWaktuText = '';
+          if (absAvg >= 0.01) {
+            const menitPerFull = 100 / absAvg; // 0–100% dengan asumsi laju relatif konstan
+            estimasiWaktuText = `
+              <div style="margin-top:4px;">
+                Perkiraan waktu pengisian dari 0–100% (kasar):
+                <strong>${menitPerFull.toFixed(1)} menit</strong>
+                <span style="opacity:0.85;">(dengan asumsi laju pengisian mendekati konstan).</span>
+              </div>
+            `;
+          }
+
+          // Penjelasan tentang skor agar lebih jelas
+          const penjelasanSkor = `
+            Skor 0–100 dihitung dari nilai mutlak rata-rata dSoC/dt dikalikan 10 dan dibatasi maksimum 100.
+            Semakin mendekati <strong>100</strong>, semakin cepat dan efisien kinerja charger pada pengujian ini.
+          `;
+
+          html += `
+            <div style="
+              padding:14px 16px;
+              border-radius:12px;
+              background:rgba(255,255,255,0.02);
+              margin-bottom:12px;
+              display:flex;
+              justify-content:space-between;
+              gap:14px;
+              align-items:flex-start;
+            ">
+              <div style="flex:1;min-width:0;">
+                <!-- Bagian identitas perangkat -->
+                <div style="font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;">
+                  Ringkasan Pengujian
+                </div>
+
+                <div style="font-weight:700;font-size:1rem;">
+                  ${escapeHtml(r.merk || 'Charger tidak diketahui')}
+                </div>
+                <div style="color:var(--text2);font-size:0.94rem;margin-top:2px;">
+                  Digunakan pada perangkat: <strong>${escapeHtml(r.hp || 'Model HP tidak diketahui')}</strong>
+                </div>
+
+                <!-- Bagian statistik utama -->
+                <div style="
+                  margin-top:10px;
+                  padding:8px 10px;
+                  border-radius:8px;
+                  background:rgba(15,23,42,0.8);
+                  border:1px solid rgba(148,163,184,0.35);
+                  font-size:0.9rem;
+                ">
+                  <div style="margin-bottom:4px;">
+                    <span style="opacity:0.9;">Rata-rata dSoC/dt:</span>
+                    <strong style="margin-left:4px;">${avgText}</strong>
+                  </div>
+                  <div style="margin-bottom:4px;">
+                    <span style="opacity:0.9;">Skor efisiensi:</span>
+                    <strong style="margin-left:4px;">${skorText}</strong>
+                  </div>
+                  <div style="margin-bottom:2px;">
+                    <span style="opacity:0.9;">Kategori performa:</span>
+                    <span style="margin-left:4px;color:var(--accent);font-weight:600;">
+                      ${escapeHtml(kategori)}
+                    </span>
+                  </div>
+                  ${estimasiWaktuText}
+                </div>
+
+                <!-- Narasi interpretasi -->
+                <div style="margin-top:10px;font-size:0.9rem;color:var(--text2);line-height:1.6;">
+                  <strong>Interpretasi singkat:</strong><br>
+                  ${escapeHtml(kalimatKategori)}
+                </div>
+
+                <div style="margin-top:8px;font-size:0.85rem;color:var(--text2);line-height:1.5;">
+                  <strong>Catatan tentang skor:</strong><br>
+                  ${penjelasanSkor}
+                </div>
+              </div>
+
+              <!-- Waktu upload -->
+              <div style="text-align:right;font-size:0.8rem;color:var(--text2);white-space:nowrap;">
+                Diunggah pada<br>
+                ${new Date(r.waktu).toLocaleString('id-ID')}
+              </div>
+            </div>
+          `;
         });
-        html += `<div style="color:var(--text2);margin-top:8px">Menampilkan ${filtered.length} hasil.</div>`;
+
+        html += `<div style="color:var(--text2);margin-top:8px;font-size:0.9rem;">Menampilkan ${filtered.length} unggahan.</div>`;
         container.innerHTML = html;
       }
 
