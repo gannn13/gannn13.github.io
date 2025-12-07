@@ -142,8 +142,24 @@
         .btn-danger { background: linear-gradient(135deg, #991b1b, #dc2626); color:white; }
         .btn-success { background: linear-gradient(135deg, #059669, #10b981); color:white; }
 
-        .formula-box { background: rgba(59,130,246,0.06); padding:16px; border-radius:10px; margin:12px 0; }
-        .math { background: rgba(15,23,42,0.85); padding:12px; border-radius:8px; margin:6px 0; text-align:center; font-size:1rem; border-left:4px solid var(--accent); }
+        .formula-box {
+            background: rgba(59,130,246,0.06);
+            padding:16px;
+            border-radius:10px;
+            margin:12px 0;
+            overflow-x:auto;   /* supaya rumus panjang bisa di-scroll di HP */
+        }
+        .math {
+            background: rgba(15,23,42,0.85);
+            padding:12px;
+            border-radius:8px;
+            margin:6px 0;
+            text-align:center;
+            font-size:1rem;
+            border-left:4px solid var(--accent);
+            overflow-x:auto;
+            white-space:nowrap;
+        }
 
         .analysis-box { padding:12px; border-radius:8px; margin-top:12px; border-left:6px solid; font-size:0.95rem; }
         .analysis-box.success { background: rgba(16,185,129,0.08); border-color: var(--success); }
@@ -158,8 +174,12 @@
            RESPONSIVE: MOBILE & TABLET
            ==========================*/
         @media (max-width: 900px) {
+            /* naikkan konten turun ke bawah agar tidak tertimpa nav */
             body {
-                padding: 12px 8px;
+                padding: 70px 8px 16px;  /* top lebih besar, nav di atas konten */
+            }
+            .container {
+                padding-top: 10px;
             }
 
             .side-nav {
@@ -175,10 +195,6 @@
             .side-nav .nav-btn {
                 padding: 6px 10px;
                 font-size: 0.8rem;
-            }
-
-            .container {
-                padding-top: 70px; /* beri ruang untuk nav fixed */
             }
 
             header {
@@ -237,19 +253,16 @@
                 padding: 8px 10px;
             }
 
-            /* Grafik: beri jarak antar canvas */
             canvas {
                 margin-bottom: 12px;
             }
 
-            /* Baris unggahan di halaman Unggahan:
-               kartu disusun vertikal agar tidak sempit */
+            /* Kartu unggahan: susun vertikal supaya tidak sempit */
             #uploadsList > div {
                 flex-direction: column !important;
                 align-items: flex-start !important;
                 gap: 8px !important;
             }
-
             #uploadsList > div > div:last-child {
                 text-align: left !important;
                 white-space: normal !important;
@@ -266,10 +279,6 @@
         }
 
         @media (max-width: 600px) {
-            .container {
-                padding-top: 80px;
-            }
-
             .card {
                 border-radius: 14px;
             }
@@ -282,14 +291,14 @@
     </style>
 </head>
 <body>
-    <!-- SIDE NAV fixed kiri atas (di HP akan jadi bar atas) -->
+    <!-- SIDE NAV -->
     <div class="side-nav" role="navigation" aria-label="Menu utama">
         <button class="nav-btn active" id="navHome" data-page="home">Beranda</button>
         <button class="nav-btn" id="navUploads" data-page="uploads">Unggahan</button>
         <button class="nav-btn" id="navTutorial" data-page="tutorial">Tutorial</button>
     </div>
 
-    <!-- HEADER centered top (bukan fixed) -->
+    <!-- HEADER -->
     <header>
       <div class="header-inner" role="banner">
         <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
@@ -305,7 +314,6 @@
     <div class="container">
         <!-- PAGE: BERANDA -->
         <main id="page-home">
-            <!-- 0. Input merk HP & merk charger di atas -->
             <div class="card">
                 <h2>Informasi Identitas (untuk upload)</h2>
                 <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -320,7 +328,6 @@
                 </div>
             </div>
 
-            <!-- 1. Input Data -->
             <div class="card">
                 <h2>Input Data Percobaan</h2>
                 <table id="dataTable">
@@ -334,7 +341,6 @@
                 <p style="margin-top:10px;color:var(--text2)">Tips: Klik "Tambah Baris" untuk memulai pengisian data</p>
             </div>
 
-            <!-- 2. Teori -->
             <div class="card">
                 <h2>Teori Turunan Numerik</h2>
                 <div class="formula-box">
@@ -353,7 +359,6 @@
                 </p>
             </div>
 
-            <!-- 3. Hasil + Analisis -->
             <div class="card">
                 <h2>Hasil Perhitungan</h2>
                 <div id="calculationResults" style="text-align:center; font-size:1.8rem; padding:18px; background:linear-gradient(135deg,var(--primary),var(--accent)); border-radius:10px; color:white;"></div>
@@ -362,14 +367,12 @@
                 <div id="analysisBox" class="analysis-box" style="display:none;"></div>
             </div>
 
-            <!-- 4. Grafik -->
             <div class="card">
                 <h2>Grafik Interaktif</h2>
                 <canvas id="socChart"></canvas>
                 <canvas id="dsocdtChart"></canvas>
             </div>
 
-            <!-- 5. Upload Hasil (TANPA input merk & hp di sini) -->
             <div class="card">
                 <h2>Upload Hasil</h2>
                 <p style="margin-bottom:12px;color:var(--text2);">Upload data Anda sehingga orang lain dapat melihatnya.</p>
@@ -379,7 +382,7 @@
             </div>
         </main>
 
-        <!-- PAGE: UNGGAHAN (daftar + pencarian) -->
+        <!-- PAGE: UNGGAHAN -->
         <main id="page-uploads" class="hidden">
             <div class="card">
                 <h2>Unggahan Publik</h2>
@@ -415,12 +418,10 @@
     </div>
 
     <script>
-      // Ganti DB_URL bila perlu
       const DB_URL = "https://analisis-efisiensi-charger-default-rtdb.asia-southeast1.firebasedatabase.app";
 
       function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-      // ====== NAVIGATION (single-page) ======
       const navHome = document.getElementById('navHome');
       const navUploads = document.getElementById('navUploads');
       const navTutorial = document.getElementById('navTutorial');
@@ -429,9 +430,7 @@
       const pageTutorial = document.getElementById('page-tutorial');
 
       function showPage(page){
-        // remove active from all
         [navHome, navUploads, navTutorial].forEach(b=>b.classList.remove('active'));
-        // hide all
         pageHome.classList.add('hidden');
         pageUploads.classList.add('hidden');
         pageTutorial.classList.add('hidden');
@@ -442,7 +441,7 @@
         } else if (page === 'uploads') {
           navUploads.classList.add('active');
           pageUploads.classList.remove('hidden');
-          loadUploads(); // refresh when opening
+          loadUploads();
         } else if (page === 'tutorial') {
           navTutorial.classList.add('active');
           pageTutorial.classList.remove('hidden');
@@ -452,7 +451,6 @@
       navUploads.addEventListener('click', ()=> showPage('uploads'));
       navTutorial.addEventListener('click', ()=> showPage('tutorial'));
 
-      // ====== Realtime DB helpers ======
       async function fetchLeaderboard(){
         try {
           const res = await fetch(DB_URL + "/leaderboard.json");
@@ -467,30 +465,19 @@
         }
       }
 
-      // Upload function
       window.uploadToFirestore = async function(merk, hp, avg, skor) {
         try {
-          const payload = {
-            merk: merk,
-            hp: hp,
-            avg: parseFloat(avg) || 0,
-            skor: parseFloat(skor) || 0,
-            waktu: new Date().toISOString()
-          };
-
+          const payload = { merk, hp, avg: parseFloat(avg)||0, skor: parseFloat(skor)||0, waktu: new Date().toISOString() };
           const res = await fetch(DB_URL + "/leaderboard.json", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
           });
-
           if (!res.ok) {
             const text = await res.text();
             throw new Error("HTTP " + res.status + " — " + text);
           }
-
           alert("Berhasil upload ke leaderboard publik!");
-          // update uploads list if visible
           if (!pageUploads.classList.contains('hidden')) loadUploads();
         } catch (err) {
           console.error("uploadToRTDB error:", err);
@@ -498,20 +485,13 @@
         }
       };
 
-      // ====== Load uploads page list with optional filter ======
       async function loadUploads(filter=''){
         const container = document.getElementById('uploadsList');
         container.textContent = 'Memuat daftar unggahan...';
 
         const rows = await fetchLeaderboard();
-        if (rows === null) {
-          container.textContent = 'Gagal memuat daftar unggahan.';
-          return;
-        }
-        if (!rows.length) {
-          container.textContent = 'Belum ada unggahan.';
-          return;
-        }
+        if (rows === null) { container.textContent = 'Gagal memuat daftar unggahan.'; return; }
+        if (!rows.length) { container.textContent = 'Belum ada unggahan.'; return; }
 
         const q = (filter||'').toLowerCase().trim();
         const filtered = rows.filter(r => {
@@ -531,7 +511,6 @@
           const avgText  = avgVal.toFixed(3) + ' %/menit';
           const skorText = skorVal.toFixed(1) + ' / 100';
 
-          // kategori + penjelasan singkat berdasarkan rata-rata dSoC/dt
           const absAvg = Math.abs(avgVal);
           let kategori = 'Sangat Lambat';
           let kalimatKategori = 'Laju pengisian sangat kecil; kemungkinan ada kendala pada kabel, port, atau kompatibilitas charger dengan HP.';
@@ -547,10 +526,9 @@
             kalimatKategori = 'Masih dapat digunakan, tetapi laju pengisian tergolong lambat jika dibanding charger fast charging modern.';
           }
 
-          // Perkiraan kasar waktu 0–100% (berdasarkan rata-rata)
           let estimasiWaktuText = '';
           if (absAvg >= 0.01) {
-            const menitPerFull = 100 / absAvg; // 0–100% dengan asumsi laju relatif konstan
+            const menitPerFull = 100 / absAvg;
             estimasiWaktuText = `
               <div style="margin-top:4px;">
                 Perkiraan waktu pengisian dari 0–100% (kasar):
@@ -560,7 +538,6 @@
             `;
           }
 
-          // Penjelasan tentang skor agar lebih jelas
           const penjelasanSkor = `
             Skor 0–100 dihitung dari nilai mutlak rata-rata dSoC/dt dikalikan 10 dan dibatasi maksimum 100.
             Semakin mendekati <strong>100</strong>, semakin cepat dan efisien kinerja charger pada pengujian ini.
@@ -578,7 +555,6 @@
               align-items:flex-start;
             ">
               <div style="flex:1;min-width:0;">
-                <!-- Bagian identitas perangkat -->
                 <div style="font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;">
                   Ringkasan Pengujian
                 </div>
@@ -590,7 +566,6 @@
                   Digunakan pada perangkat: <strong>${escapeHtml(r.hp || 'Model HP tidak diketahui')}</strong>
                 </div>
 
-                <!-- Bagian statistik utama -->
                 <div style="
                   margin-top:10px;
                   padding:8px 10px;
@@ -616,7 +591,6 @@
                   ${estimasiWaktuText}
                 </div>
 
-                <!-- Narasi interpretasi -->
                 <div style="margin-top:10px;font-size:0.9rem;color:var(--text2);line-height:1.6;">
                   <strong>Interpretasi singkat:</strong><br>
                   ${escapeHtml(kalimatKategori)}
@@ -628,7 +602,6 @@
                 </div>
               </div>
 
-              <!-- Waktu upload -->
               <div style="text-align:right;font-size:0.8rem;color:var(--text2);white-space:nowrap;">
                 Diunggah pada<br>
                 ${new Date(r.waktu).toLocaleString('id-ID')}
@@ -644,7 +617,6 @@
       document.getElementById('reloadUploads').addEventListener('click', ()=> loadUploads(document.getElementById('searchUploads').value));
       document.getElementById('searchUploads').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') loadUploads(e.target.value); });
 
-      // ====== Table input logic (kept) ======
       const tbody = document.querySelector('#dataTable tbody');
       function attachDelete() {
           document.querySelectorAll('.btn-danger').forEach(btn => {
@@ -681,7 +653,6 @@
           return data.sort((a,b)=>a.t-b.t);
       }
 
-      // ====== Calculation (kept) ======
       let chartSoc, chartRate, avgRateGlobal = 0;
       function approxEqual(a,b){ return Math.abs(a-b) < 1e-6; }
       function lagrangeDerivativeAt(x0, x1, x2, f0, f1, f2, xEval){
@@ -770,7 +741,6 @@
             <div style="margin-top:8px;">Skor: <strong style="color:#fbbf24;">${skor}/100</strong></div>
         `;
 
-        // Build stepByStep HTML
         let stepHtml = '<ol style="margin-left:18px;color:var(--text2)">';
         stepObjects.forEach(obj => {
             stepHtml += `<li style="margin:8px 0;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02)">
@@ -784,7 +754,6 @@
 
         if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise().catch(()=>{});
 
-        // Analysis
         const abs = Math.abs(avgRateGlobal);
         let analysisHTML = '', analysisClass = '';
         if (abs > 3) { analysisHTML = 'Sangat Efektif! Charger ini termasuk kelas 100W+ (contoh: Xiaomi 120W).'; analysisClass = 'analysis-box success'; }
@@ -796,17 +765,14 @@
         analysisEl.innerHTML = `<div class="${analysisClass}" style="padding:12px;border-radius:8px">${analysisHTML}</div>`;
         analysisEl.style.display = 'block';
 
-        // Update charts
         const labels = data.map(d => d.t);
         [chartSoc, chartRate].forEach(c => c?.destroy?.());
         chartSoc = new Chart(document.getElementById('socChart'), { type: 'line', data: { labels, datasets: [{ label: 'SoC (%)', data: data.map(d=>d.soc), borderColor: '#60a5fa', tension: 0.4, fill: true }] }, options: { responsive: true } });
         chartRate = new Chart(document.getElementById('dsocdtChart'), { type: 'line', data: { labels, datasets: [{ label: 'dSoC/dt', data: rates, borderColor: '#f59e0b', tension: 0.4, fill: true }] }, options: { responsive: true } });
       }
 
-      // Trigger calc on table input changes
       tbody.addEventListener('input', calc);
 
-      // ====== Upload button: uses TOP inputs only ======
       document.getElementById('uploadPublic').addEventListener('click', async () => {
         const merkTop = (document.getElementById('merkChargerTop')||{}).value || '';
         const hpTop = (document.getElementById('hpModelTop')||{}).value || '';
@@ -821,7 +787,6 @@
         const avg = avgRateGlobal.toFixed(3);
         const skor = Math.min(100, Math.abs(avgRateGlobal)*10).toFixed(1);
 
-        // Call uploadToFirestore
         if (typeof window.uploadToFirestore === 'function') {
           window.uploadToFirestore(merkTop.trim(), hpTop.trim(), avg, skor);
         } else {
@@ -829,7 +794,6 @@
         }
       });
 
-      // Initial page
       showPage('home');
     </script>
 </body>
