@@ -170,6 +170,25 @@
 
         .hidden { display:none; }
 
+        /* ====== KHUSUS BAGIAN GRAFIK: kiri-kanan & tidak terlalu besar ====== */
+        .chart-row {
+            display: flex;
+            gap: 16px;
+            align-items: stretch;
+        }
+        .chart-box {
+            flex: 1;
+            min-width: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #socChart,
+        #dsocdtChart {
+            max-height: 260px;
+            width: 100%;
+        }
+
         /* =========================
            RESPONSIVE: MOBILE & TABLET
            ==========================*/
@@ -257,6 +276,16 @@
                 margin-bottom: 12px;
             }
 
+            /* Grafik: di HP ditumpuk vertikal supaya tidak sempit */
+            .chart-row {
+                flex-direction: column;
+            }
+
+            #socChart,
+            #dsocdtChart {
+                max-height: 210px;
+            }
+
             /* Kartu unggahan: susun vertikal supaya tidak sempit */
             #uploadsList > div {
                 flex-direction: column !important;
@@ -286,6 +315,11 @@
             .footer {
                 font-size: 0.8rem;
                 padding: 20px 12px;
+            }
+
+            #socChart,
+            #dsocdtChart {
+                max-height: 180px;
             }
         }
     </style>
@@ -369,8 +403,14 @@
 
             <div class="card">
                 <h2>Grafik Interaktif</h2>
-                <canvas id="socChart"></canvas>
-                <canvas id="dsocdtChart"></canvas>
+                <div class="chart-row">
+                    <div class="chart-box">
+                        <canvas id="socChart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <canvas id="dsocdtChart"></canvas>
+                    </div>
+                </div>
             </div>
 
             <div class="card">
