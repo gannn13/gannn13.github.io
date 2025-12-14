@@ -179,6 +179,15 @@
             .footer { font-size: 0.82rem; padding: 16px 12px; }
             #socChart, #dsocdtChart { max-height: 180px; }
         }
+
+        /* Gaya Khusus untuk Konten Teori agar lebih rapi */
+        .explain ul {
+            margin-left: 20px;
+            list-style-type: disc;
+        }
+        .explain li {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -419,26 +428,26 @@
                 <h2>Teori Pengisian Baterai & Diferensiasi Numerik</h2>
 
                 <div class="explain" id="explain-soc">
-                    <h4>Prinsip Dasar Energi dan Daya (Rumus PPT)</h4>
+                    <h4>Prinsip Dasar Energi dan Daya</h4>
                     <ul style="margin-top:6px;color:var(--text2);">
-                        <li>**Konversi Kapasitas** (mAh ke Wh, $V_{\text{batt}}=3.85V$):
+                        <li>Konversi Kapasitas (mAh ke Wh, Vbatt=3.85V) :
                             <div class="math">\[ \text{Wh} = \frac{\text{mAh} \times 3.85}{1000} \]</div>
                         </li>
-                        <li>**Daya Efektif Charger** (Efisiensi $\eta = 0.88$):
+                        <li>Daya Efektif Charger (Efisiensi n = 0.88) :
                             <div class="math">\[ P_{\text{efektif}} = P_{\text{Charger}} \times 0.88 \]</div>
                         </li>
-                        <li>**Daya Masuk Aktual** ($P_{\text{eff\_in}}$) dibatasi oleh kemampuan Max Watt HP.
+                        <li>Daya Masuk Aktual (Peff_in) dibatasi oleh kemampuan Max Watt HP.
                         </li>
-                        <li>**mAh Masuk per Menit** ($dQ/dt$):
+                        <li>mAh Masuk per Menit (dQ/dt) :
                             <div class="math">\[ \frac{dQ}{dt} = \frac{P_{\text{eff\_in}}}{3.85} \times \frac{1000}{60} \quad (\text{mAh/menit}) \]</div>
                         </li>
-                         <li>**Laju Pengisian Persentase** ($dSoC/dt$ Teoretis):
+                         <li>Laju Pengisian Persentase (dSoC/dt Teoretis) :
                             <div class="math">\[ \frac{d\text{SoC}}{dt} \approx \frac{dQ/dt}{\text{Total mAh}} \times 100 \quad (\%/menit) \]</div>
                         </li>
                     </ul>
                 </div>
 
-                <div class="explain" style="margin-top:20px;">
+                <div class="explain" id="explain-diff">
                     <h4>Diferensiasi Numerik (Analisis Eksperimen)</h4>
                     <p>
                         Untuk data diskrit (data eksperimen yang dicatat setiap interval waktu), kita menggunakan Diferensiasi Numerik untuk mengestimasi laju perubahan (\(\dfrac{d\text{SoC}}{dt}\) dalam %/menit).
@@ -1162,6 +1171,7 @@
             } else if (page === 'uploads') {
                 loadUploads();
             } else if (page === 'theory') {
+                // Memicu rendering MathJax saat masuk ke halaman Teori
                 if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise().catch(()=>{});
             }
         }
