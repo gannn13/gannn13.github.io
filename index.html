@@ -302,7 +302,7 @@
             <div class="card">
                 <h2>Informasi Tambahan: Perhitungan Numerik</h2>
                 <p style="color:var(--text2);line-height:1.6;">
-                    Jika Anda memiliki data eksperimen (Waktu vs. Persentase Baterai) sendiri, Anda bisa menginputnya secara manual untuk mendapatkan laju pengisian aktual (\(dSoC/dt\)) menggunakan metode diferensiasi numerik.
+                    Jika Anda memiliki data eksperimen (Waktu vs. Persentase Baterai) sendiri, Anda bisa menginputnya secara manual untuk mendapatkan laju pengisian <strong>aktual</strong> (\(dSoC/dt\)) menggunakan metode diferensiasi numerik.
                 </p>
                 <div style="margin-top:12px;">
                     <button class="btn" id="goToManualButton" onclick="showPage('manual')">➡️ Masuk ke Data Manual</button>
@@ -314,12 +314,12 @@
              <div class="card">
                 <h2>Panduan: Perhitungan Data Manual</h2>
                 <div style="color:var(--text2);line-height:1.8;">
-                    <p style="margin-bottom:12px;">Gunakan menu ini jika Anda memiliki data eksperimen sendiri (misalnya, dicatat setiap 5 menit) untuk menghitung laju pengisian aktual (\(dSoC/dt\)) menggunakan diferensiasi numerik.</p>
+                    <p style="margin-bottom:12px;">Gunakan menu ini jika Anda memiliki data eksperimen sendiri (misalnya, dicatat setiap 5 menit) untuk menghitung laju pengisian <strong>aktual</strong> (\(dSoC/dt\)) menggunakan diferensiasi numerik.</p>
                     <ol>
-                        <li>Pastikan Anda sudah memilih Perangkat di menu "Beranda" karena data "mAh" HP digunakan untuk konversi dSoC/dt ke dQ/dt (mAh/menit).</li>
-                        <li>Klik + Tambah Baris dan masukkan Waktu (menit) dan SoC (%).</li>
+                        <li>Pastikan Anda sudah memilih <strong>Perangkat</strong> di menu *Beranda* karena data <strong>mAh</strong> HP digunakan untuk konversi dSoC/dt ke dQ/dt (mAh/menit).</li>
+                        <li>Klik <strong>+ Tambah Baris</strong> dan masukkan Waktu (menit) dan SoC (%).</li>
                         <li>Aplikasi akan menghitung dSoC/dt secara otomatis, menunjukkan langkah perhitungannya, dan memberikan Skor Efisiensi.</li>
-                        <li>Gunakan tombol "Upload Hasil" untuk membagikan data eksperimen Anda ke publik.</li>
+                        <li>Gunakan tombol <strong>Upload Hasil</strong> untuk membagikan data eksperimen Anda ke publik.</li>
                     </ol>
                 </div>
             </div>
@@ -357,7 +357,7 @@
             <div class="card">
                 <h2>Langkah Perhitungan Diferensiasi Numerik</h2>
                 <p style="color:var(--text2);line-height:1.6;">
-                    Perhitungan ini menggunakan metode "Three-Point Central Difference" atau "Lagrange Interpolation" untuk mengestimasi turunan \(dSoC/dt\) dari data diskrit Anda.
+                    Perhitungan ini menggunakan metode *Three-Point Central Difference* atau *Lagrange Interpolation* untuk mengestimasi turunan \(dSoC/dt\) dari data diskrit Anda.
                 </p>
 
                 <h3 style="margin-top:12px;">Langkah Perhitungan Detail</h3>
@@ -486,6 +486,17 @@
         
         let db; // Variabel global untuk database
 
+        // Helper function for safe MathJax typesetting
+        function typesetSafe(el) {
+            if (window.MathJax && MathJax.typesetPromise) {
+                // Ensure the element is a DOM node, not a string ID
+                const targetEl = typeof el === 'string' ? document.getElementById(el) : el;
+                if (targetEl) {
+                    MathJax.typesetPromise([targetEl]).catch(() => {});
+                }
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
              // Inisialisasi Firebase menggunakan SDK V8 yang dimuat melalui CDN (di <head>)
              if (typeof firebase !== 'undefined' && typeof firebase.initializeApp === 'function') {
@@ -511,6 +522,9 @@
              const manualChargerInput = document.getElementById('manualChargerName');
              if (manualHpInput) manualHpInput.addEventListener('input', calc);
              if (manualChargerInput) manualChargerInput.addEventListener('input', calc);
+             
+             // Mengikat listener input pada tabel data manual di sini
+             document.getElementById('dataTable').addEventListener('input', calc);
         });
         // --- END KONFIGURASI FIREBASE ---
 
@@ -920,38 +934,96 @@
             return result;
         }
 
+        // START: FUNGSI generateMathSteps() DENGAN HTML MURNI UNTUK DESKRIPSI
         function generateMathSteps(data, result) {
             const eff = CHARGING_EFFICIENCY;
             const V = BATTERY_VOLTAGE;
-            
-            const step1 = `**1. Hitung Daya Efektif Charger (\\(P_{\\text{eff\_out}}\\))**
-            <div class="math">\\[P_{\\text{eff\_out}} = P_{\\text{Charger}} \\times \\eta = ${data.chargerWatt}W \\times ${eff} = ${result.efektifWattOut.toFixed(2)}W\\]</div>
-            *(Keterangan: $\\eta$ adalah efisiensi 88% dari data literatur.)*`;
 
-            const step2 = `**2. Hitung Daya Masuk Aktual ke HP (\\(P_{\\text{eff\_in}}\\))**
-            *Daya masuk dibatasi oleh Max Watt HP (Min($P_{\\text{eff\_out}}$, $P_{\\text{Max\_HP}}$)).*
-            <div class="math">\\[P_{\\text{eff\_in}} = \\min(${result.efektifWattOut.toFixed(2)}W, ${data.maxWattHp}W) = ${result.efektifWattIn.toFixed(2)}W\\]</div>`;
+            return `
+            <ol style="margin-left:18px; line-height:1.8; color:var(--text2);">
 
-            const step3 = `**3. Hitung Laju Pengisian (mAh/menit - \\(dQ/dt\\))**
-            <div class="math">\\[ \\frac{dQ}{dt} = \\frac{P_{\\text{eff\_in}}}{V_{\\text{batt}}} \\times \\frac{1000}{60} \\approx ${result.mahPerMenit.toFixed(1)} \\text{ mAh/menit} \\]</div>
-            *(Keterangan: $V_{\\text{batt}}$ adalah tegangan baterai rata-rata ${V}V.)*`;
+                <li>
+                    <strong>1. Hitung Daya Efektif Charger (P<sub>eff,out</sub>)</strong>
+                    <div class="math">
+                        \\[
+                        P_{\\text{eff,out}} = P_{\\text{charger}} \\times \\eta
+                        = ${data.chargerWatt} \\times ${eff}
+                        = ${result.efektifWattOut.toFixed(2)}\\,\\text{W}
+                        \\]
+                    </div>
+                    <p>
+                        Daya charger dikalikan dengan efisiensi (88%) untuk mendapatkan daya efektif keluaran.
+                    </p>
+                </li>
 
-            const step4 = `**4. Hitung Laju Pengisian Persentase (\\(dSoC/dt\\) Teoretis)**
-            <div class="math">\\[ \\frac{d\\text{SoC}}{dt} = \\frac{dQ/dt}{\\text{Total mAh}} \\times 100 \\approx ${result.lajuPersenPerMenit.toFixed(2)} \\%\\text{/menit} \\]</div>`;
-            
-            const step5 = `**5. Estimasi Waktu Penuh (0-100%)**
-            *Waktu dihitung dengan asumsi laju pengisian konstan:*
-            <div class="math">\\[\\text{Waktu} = \\frac{100}{\\frac{d\\text{SoC}}{dt}} \\approx ${result.estimasiMenit.toFixed(1)} \\text{ menit}\\]</div>`;
+                <li>
+                    <strong>2. Hitung Daya Masuk Aktual ke HP (P<sub>eff,in</sub>)</strong>
+                    <div class="math">
+                        \\[
+                        P_{\\text{eff,in}} =
+                        \\min(${result.efektifWattOut.toFixed(2)}, ${data.maxWattHp})
+                        = ${result.efektifWattIn.toFixed(2)}\\,\\text{W}
+                        \\]
+                    </div>
+                    <p>
+                        Daya masuk dibatasi oleh kemampuan maksimum pengisian HP.
+                    </p>
+                </li>
 
-            return `${step1} ${step2} ${step3} ${step4} ${step5}`;
+                <li>
+                    <strong>3. Hitung Laju Pengisian Muatan (dQ/dt)</strong>
+                    <div class="math">
+                        \\[
+                        \\frac{dQ}{dt}
+                        = \\frac{P_{\\text{eff,in}}}{${V}}
+                        \\times \\frac{1000}{60}
+                        = ${result.mahPerMenit.toFixed(1)}\\,\\text{mAh/menit}
+                        \\]
+                    </div>
+                    <p>
+                        Konversi daya menjadi laju pengisian muatan baterai (mAh/menit).
+                    </p>
+                </li>
+
+                <li>
+                    <strong>4. Hitung Laju Pengisian Persentase (dSoC/dt)</strong>
+                    <div class="math">
+                        \\[
+                        \\frac{d\\text{SoC}}{dt}
+                        = \\frac{dQ/dt}{\\text{Total mAh}} \\times 100
+                        = ${result.lajuPersenPerMenit.toFixed(2)}\\,\\%/menit
+                        \\]
+                    </div>
+                    <p>
+                        Laju pengisian dalam persentase per menit.
+                    </p>
+                </li>
+
+                <li>
+                    <strong>5. Estimasi Waktu Pengisian Penuh (0–100%)</strong>
+                    <div class="math">
+                        \\[
+                        t = \\frac{100}{d\\text{SoC}/dt}
+                        = ${result.estimasiMenit.toFixed(1)}\\,\\text{menit}
+                        \\]
+                    </div>
+                    <p>
+                        Diasumsikan laju pengisian konstan selama proses pengisian.
+                    </p>
+                </li>
+
+            </ol>
+            `;
         }
+        // END: FUNGSI generateMathSteps() DENGAN HTML MURNI UNTUK DESKRIPSI
 
         function updateEstimationDisplay() {
             const data = getPerangkatData();
             const result = hitungEstimasi();
             const estContainer = document.getElementById('estimationResults');
             
-            if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise().catch(()=>{});
+            // PENTING: Panggil MathJax untuk elemen spesifik agar sinkron dengan update
+            typesetSafe(document.getElementById('estimationCard'));
 
             if (isNaN(result.estimasiMenit)) {
                 estContainer.className = 'analysis-box success';
@@ -973,15 +1045,15 @@
             
             if (rasioKesesuaian >= 0.95) {
                 analisisTitle = '✅ Kinerja Sempurna (Optimal)';
-                analisisText = `Charger (**${data.chargerWatt}W**) ini ideal. Daya masuk aktual (**${effW.toFixed(1)}W**) mampu memenuhi Max Watt pengisian HP Anda (${data.maxWattHp}W). Laju pengisian teoretis sangat optimal.`;
+                analisisText = `Charger (<strong>${data.chargerWatt}W</strong>) ini ideal. Daya masuk aktual (<strong>${effW.toFixed(1)}W</strong>) mampu memenuhi Max Watt pengisian HP Anda (${data.maxWattHp}W). Laju pengisian teoretis sangat optimal.`;
                 estClass = 'analysis-box success';
             } else if (rasioKesesuaian >= 0.60) {
                 analisisTitle = '⚠️ Cukup Efektif';
-                analisisText = `Charger (**${data.chargerWatt}W**) memberikan daya masuk aktual **${effW.toFixed(1)}W**. HP Anda (${data.hpName}) mampu menerima hingga ${data.maxWattHp}W. Pengisian akan lebih cepat daripada charger standar, namun belum maksimal.`;
+                analisisText = `Charger (<strong>${data.chargerWatt}W</strong>) memberikan daya masuk aktual <strong>${effW.toFixed(1)}W</strong>. HP Anda (${data.hpName}) mampu menerima hingga ${data.maxWattHp}W. Pengisian akan lebih cepat daripada charger standar, namun belum maksimal.`;
                 estClass = 'analysis-box warning';
             } else {
                 analisisTitle = '❌ Tidak Efisien';
-                analisisText = `Charger (**${data.chargerWatt}W**) sangat tidak efisien. Daya masuk aktual hanya **${effW.toFixed(1)}W**, jauh di bawah kemampuan Max Watt HP (${data.maxWattHp}W). Direkomendasikan mengganti charger.`;
+                analisisText = `Charger (<strong>${data.chargerWatt}W</strong>) sangat tidak efisien. Daya masuk aktual hanya <strong>${effW.toFixed(1)}W</strong>, jauh di bawah kemampuan Max Watt HP (${data.maxWattHp}W). Direkomendasikan mengganti charger.`;
                 estClass = 'analysis-box danger';
             }
             
@@ -1018,7 +1090,7 @@
             
             // Isi Konten Matematika dan Render ulang
             mathStepsContent.innerHTML = generateMathSteps(data, result);
-            if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise().catch(()=>{});
+            typesetSafe(document.getElementById('mathDetails'));
         }
 
         // Tombol Lihat Proses Matematika
@@ -1026,7 +1098,7 @@
             mathDetails.classList.toggle('hidden');
             if (!mathDetails.classList.contains('hidden')) {
                 // Render ulang MathJax saat box dibuka
-                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise().catch(()=>{});
+                typesetSafe(document.getElementById('mathDetails'));
             }
         });
         
@@ -1172,7 +1244,8 @@
                 loadUploads();
             } else if (page === 'theory') {
                 // Memicu rendering MathJax saat masuk ke halaman Teori
-                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise().catch(()=>{});
+                typesetSafe(document.getElementById('explain-soc'));
+                typesetSafe(document.getElementById('explain-diff'));
             }
         }
         
@@ -1242,7 +1315,6 @@
             const manualChargerName = document.getElementById('manualChargerName').value.trim();
             
             // HANYA update jika input manual DIISI, tapi prioritaskan dropdown Beranda jika sudah dipilih
-            // (Note: Logika ini menjaga nilai dari Beranda jika sudah ada, tetapi memungkinkan nilai manual jika Beranda kosong)
             
             let hpNameForTop = hpModelTop.value;
             let chargerNameForTop = merkChargerTop.value;
@@ -1351,10 +1423,10 @@
                 const rateMahPerMenit = parseFloat(obj.interp.split(' ')[0]) * (totalMah / 100);
                 
                 stepHtml += `<li style="margin:8px 0;padding:8px;border-radius:8px;background:rgba(255,255,255,0.9)">
-                                <div style="font-weight:700">${escapeHtml(obj.method.replace(/\\/g, ''))}</div>
+                                <div style="font-weight:700">${obj.method}</div>
                                 <div style="margin-top:6px;background:rgba(240,249,255,0.9);padding:8px;border-radius:6px; overflow-x:auto;">\\[ ${obj.latex} \\]</div>
                                 <div style="margin-top:6px;color:var(--text2)">
-                                    Hasil: <strong style="color:var(--text)">${obj.interp.replace(/\\/g, '')}</strong>
+                                    Hasil: <strong style="color:var(--text)">${obj.interp}</strong>
                                     <span style="opacity:0.8;">(setara $\\approx$ ${rateMahPerMenit.toFixed(1)} mAh/menit)</span>
                                 </div>
                               </li>`;
@@ -1362,7 +1434,9 @@
             stepHtml += '</ol>';
             stepByStep.innerHTML = stepHtml;
 
-            if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise().catch(()=>{});
+            // Memicu rendering MathJax untuk langkah perhitungan
+            typesetSafe(document.getElementById('stepByStep'));
+
 
             const abs = Math.abs(avgRateGlobal);
             let analysisHTML = '', analysisClass = '';
@@ -1380,8 +1454,6 @@
             chartSoc = new Chart(document.getElementById('socChart'), { type: 'line', data: { labels, datasets: [{ label: 'SoC (%)', data: data.map(d=>d.soc), borderColor: '#0b69ff', tension: 0.4, fill: true }] }, options: { responsive: true } });
             chartRate = new Chart(document.getElementById('dsocdtChart'), { type: 'line', data: { labels, datasets: [{ label: 'dSoC/dt (%/menit)', data: rates, borderColor: '#3db2ff', tension: 0.4, fill: true }] }, options: { responsive: true } });
         }
-
-        document.getElementById('dataTable').addEventListener('input', calc);
 
         // --- FUNGSI UPLOAD YANG SUDAH DIIMPLEMENTASIKAN UNTUK REALTIME DB ---
         window.uploadToFirestore = async function(hp, merk, avg, skor) {
@@ -1531,3 +1603,4 @@
 </body>
 </html>
 
+pada bagian ini terdapat nomor yang tertimpa yang membuat tampilannya jadi agak kurang bagus kamu bisa lihat kan? ada di foto itu 1.1. seperti ini dan 2.2. 3.3. dan seterusnya, tolong beri tau dan analisis bagaimana memperbaikinya, tolong buatkan namun hanya itu saja, jangan sentuh apa apa selain itu
