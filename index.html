@@ -302,7 +302,7 @@
             <div class="card">
                 <h2>Informasi Tambahan: Perhitungan Numerik</h2>
                 <p style="color:var(--text2);line-height:1.6;">
-                    Jika Anda memiliki data eksperimen (Waktu vs. Persentase Baterai) sendiri, Anda bisa menginputnya secara manual untuk mendapatkan laju pengisian **aktual** (\(dSoC/dt\)) menggunakan metode diferensiasi numerik.
+                    Jika Anda memiliki data eksperimen (Waktu vs. Persentase Baterai) sendiri, Anda bisa menginputnya secara manual untuk mendapatkan laju pengisian aktual (\(dSoC/dt\)) menggunakan metode diferensiasi numerik.
                 </p>
                 <div style="margin-top:12px;">
                     <button class="btn" id="goToManualButton" onclick="showPage('manual')">➡️ Masuk ke Data Manual</button>
@@ -314,12 +314,12 @@
              <div class="card">
                 <h2>Panduan: Perhitungan Data Manual</h2>
                 <div style="color:var(--text2);line-height:1.8;">
-                    <p style="margin-bottom:12px;">Gunakan menu ini jika Anda memiliki data eksperimen sendiri (misalnya, dicatat setiap 5 menit) untuk menghitung laju pengisian **aktual** (\(dSoC/dt\)) menggunakan diferensiasi numerik.</p>
+                    <p style="margin-bottom:12px;">Gunakan menu ini jika Anda memiliki data eksperimen sendiri (misalnya, dicatat setiap 5 menit) untuk menghitung laju pengisian aktual (\(dSoC/dt\)) menggunakan diferensiasi numerik.</p>
                     <ol>
-                        <li>Pastikan Anda sudah memilih **Perangkat** di menu *Beranda* karena data **mAh** HP digunakan untuk konversi $dSoC/dt$ ke $dQ/dt$ (mAh/menit).</li>
-                        <li>Klik **+ Tambah Baris** dan masukkan Waktu (menit) dan SoC (%).</li>
-                        <li>Aplikasi akan menghitung $dSoC/dt$ secara otomatis, menunjukkan langkah perhitungannya, dan memberikan Skor Efisiensi.</li>
-                        <li>Gunakan tombol **Upload Hasil** untuk membagikan data eksperimen Anda ke publik.</li>
+                        <li>Pastikan Anda sudah memilih Perangkat di menu "Beranda" karena data "mAh" HP digunakan untuk konversi dSoC/dt ke dQ/dt (mAh/menit).</li>
+                        <li>Klik + Tambah Baris dan masukkan Waktu (menit) dan SoC (%).</li>
+                        <li>Aplikasi akan menghitung dSoC/dt secara otomatis, menunjukkan langkah perhitungannya, dan memberikan Skor Efisiensi.</li>
+                        <li>Gunakan tombol "Upload Hasil" untuk membagikan data eksperimen Anda ke publik.</li>
                     </ol>
                 </div>
             </div>
@@ -357,7 +357,7 @@
             <div class="card">
                 <h2>Langkah Perhitungan Diferensiasi Numerik</h2>
                 <p style="color:var(--text2);line-height:1.6;">
-                    Perhitungan ini menggunakan metode *Three-Point Central Difference* atau *Lagrange Interpolation* untuk mengestimasi turunan \(dSoC/dt\) dari data diskrit Anda.
+                    Perhitungan ini menggunakan metode "Three-Point Central Difference" atau "Lagrange Interpolation" untuk mengestimasi turunan \(dSoC/dt\) dari data diskrit Anda.
                 </p>
 
                 <h3 style="margin-top:12px;">Langkah Perhitungan Detail</h3>
@@ -1530,3 +1530,4 @@
     </script>
 </body>
 </html>
+
